@@ -1,0 +1,3 @@
+to test range check:
+
+/run CellRangeCheckDebug:Show()
