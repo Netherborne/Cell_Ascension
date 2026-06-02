@@ -18,7 +18,7 @@ fixes to the ZB version:
 
 # Known issues:
 
-1- Heal prediction is not working 100% right, neither it was with ascension default frames. will try to fix
+1- Heal prediction is not working perfectly right 100% of the times, but it mostly works, neither it was with ascension default frames. will try to fix
 
 # Cell
 
