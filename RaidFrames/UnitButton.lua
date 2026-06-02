@@ -302,6 +302,11 @@ local function HandleIndicators(b)
         if type(t["showAnimation"]) == "boolean" then
             indicator:ShowAnimation(t["showAnimation"])
         end
+        if type(t["showJumpingAnimation"]) == "boolean" then
+            if indicator.ShowJumpingAnimation then
+                indicator:ShowJumpingAnimation(t["showJumpingAnimation"])
+            end
+        end
         -- update duration
         if type(t["showDuration"]) == "boolean" or type(t["showDuration"]) == "number" then
             indicator:ShowDuration(t["showDuration"])
@@ -884,6 +889,13 @@ local function UpdateIndicators(layout, indicatorName, setting, value, value2)
             elseif value == "showAnimation" then
                 F.IterateAllUnitButtons(function(b)
                     b.indicators[indicatorName]:ShowAnimation(value2)
+                    UnitButton_UpdateAuras(b)
+                end, true)
+            elseif value == "showJumpingAnimation" then
+                F.IterateAllUnitButtons(function(b)
+                    if b.indicators[indicatorName].ShowJumpingAnimation then
+                        b.indicators[indicatorName]:ShowJumpingAnimation(value2)
+                    end
                     UnitButton_UpdateAuras(b)
                 end, true)
             elseif value == "trackByName" then

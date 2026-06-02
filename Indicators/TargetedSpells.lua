@@ -155,26 +155,28 @@ local function CheckUnitCast(sourceUnit, isRecheck)
         end
     end
 
-    -- name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId
-    local name, _, texture, startTimeMS, endTimeMS, _, _, notInterruptible, spellId = UnitCastingInfo(sourceUnit)
+    -- name, nameSubtext, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId
+    local name, _, _, texture, startTimeMS, endTimeMS, _, _, notInterruptible,spellId = UnitCastingInfo(sourceUnit)
     if not name then
-        -- name, text, texture, startTimeMS, endTimeMS, isTradeSkill, notInterruptible, spellId
-        name, _, texture, startTimeMS, endTimeMS, _, notInterruptible, spellId = UnitChannelInfo(sourceUnit)
+        -- name, nameSubtext, text, texture, startTimeMS, endTimeMS, isTradeSkill, notInterruptible, spellId
+        name, _, _, texture, startTimeMS, endTimeMS, _,_, notInterruptible, spellId = UnitChannelInfo(sourceUnit)
         isChanneling = true
     end
+
+    spellId = spellId or name
 
     -- print(sourceUnit, name, spellId)
 
     if spellId and (Cell.vars.targetedSpellsList[spellId] or showAllSpells) then
         if casts[sourceGUID] then
-            casts[sourceGUID]["startTime"] = startTimeMS/1000
-            casts[sourceGUID]["endTime"] = endTimeMS/1000
+            casts[sourceGUID]["startTime"] = startTimeMS and startTimeMS/1000 or GetTime()
+            casts[sourceGUID]["endTime"] = endTimeMS and endTimeMS/1000 or (GetTime() + 60)
             casts[sourceGUID]["spellId"] = spellId
             casts[sourceGUID]["icon"] = texture
         else
             casts[sourceGUID] = {
-                ["startTime"] = startTimeMS/1000,
-                ["endTime"] = endTimeMS/1000,
+                ["startTime"] = startTimeMS and startTimeMS/1000 or GetTime(),
+                ["endTime"] = endTimeMS and endTimeMS/1000 or (GetTime() + 60),
                 ["spellId"] = spellId,
                 ["icon"] = texture,
                 ["isChanneling"] = isChanneling,
