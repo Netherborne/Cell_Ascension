@@ -136,10 +136,12 @@ function frame:PLAYER_ENTERING_WORLD()
         frame:UnregisterEvent("ENCOUNTER_START")
         frame:UnregisterEvent("ENCOUNTER_END")
         frame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-        frame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+        -- frame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+        Cell_UnregisterFromGroupRosterProxy(frame)
         return
     else
-        frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        -- frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        Cell_RegisterForGroupRosterProxy(frame)
     end
 
     if not init then frame:GROUP_ROSTER_UPDATE() end
@@ -272,7 +274,8 @@ local function UpdateTools(which)
     if not which or which == "deathReport" then
         if CellDB["tools"]["deathReport"][1] then
             frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-            frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+            -- frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+            Cell_RegisterForGroupRosterProxy(frame)
 
             limit = CellDB["tools"]["deathReport"][2]
             count = 0

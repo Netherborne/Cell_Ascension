@@ -106,12 +106,14 @@ end
 UpdateMode = function()
     -- update button
     if isInstantMode then
-        raidRosterFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        -- raidRosterFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        Cell_RegisterForGroupRosterProxy(raidRosterFrame)
         modeBtn:SetText(L["Instant Mode"])
         modeBtn.tex:SetTexture("Interface\\AddOns\\Cell_Ascension\\Media\\Icons\\instant")
         LCG.PixelGlow_Stop(modeBtn)
     else
-        raidRosterFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+        -- raidRosterFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+        Cell_UnregisterFromGroupRosterProxy(raidRosterFrame)
         modeBtn:SetText(L["Premade Mode"])
         modeBtn.tex:SetTexture("Interface\\AddOns\\Cell_Ascension\\Media\\Icons\\premade")
         LCG.PixelGlow_Start(modeBtn, Cell.GetAccentColorTable(1), 12, 0.25, 10, 1)
@@ -129,7 +131,8 @@ local function CreateProcessingFrame()
     processingFrame:Hide()
 
     processingFrame:SetScript("OnShow", function()
-        processingFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        -- processingFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        Cell_RegisterForGroupRosterProxy(processingFrame)
         ProcessNext()
     end)
 
@@ -587,14 +590,16 @@ raidRosterFrame:SetScript("OnEvent", function()
 end)
 
 raidRosterFrame:SetScript("OnShow", function()
-    raidRosterFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+    -- raidRosterFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+    Cell_RegisterForGroupRosterProxy(raidRosterFrame)
     LoadRoster()
     CheckPermission()
     assistantCB:SetChecked(IsEveryoneAssistant())
 end)
 
 raidRosterFrame:SetScript("OnHide", function()
-    raidRosterFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    -- raidRosterFrame:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    Cell_UnregisterFromGroupRosterProxy(raidRosterFrame)
     Reset()
 end)
 

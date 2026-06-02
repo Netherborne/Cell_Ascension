@@ -470,7 +470,8 @@ local function QuickAssist_UpdateAll(self)
 end
 
 local function QuickAssist_RegisterEvents(self)
-    self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    -- self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    Cell_RegisterForGroupRosterProxy(self)
 
     self:RegisterEvent("UNIT_HEALTH")
     self:RegisterEvent("UNIT_MAXHEALTH")
@@ -490,6 +491,7 @@ end
 
 local function QuickAssist_UnregisterEvents(self)
     self:UnregisterAllEvents()
+    Cell_UnregisterFromGroupRosterProxy(self)
 end
 
 local function QuickAssist_OnEvent(self, event, unit, arg, arg2)
@@ -879,11 +881,13 @@ specFrame:SetScript("OnEvent", specFrame.PrepareUpdate)
 local function EnableSpecFilter(enable)
     if enable then
         specFrame:PrepareUpdate()
-        specFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        -- specFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+        Cell_RegisterForGroupRosterProxy(specFrame)
         LGI.RegisterCallback(specFrame, "GroupInfo_Update", "PrepareUpdate")
     else
         specFrame:UnregisterAllEvents()
-        LGI.UnregisterCallback(specFrame, "GroupInfo_Update")
+        Cell_UnregisterFromGroupRosterProxy(specFrame)
+        LGI.UnregisterCallback(specFrame, "GroupInfo_Update", "PrepareUpdate")
     end
 end
 

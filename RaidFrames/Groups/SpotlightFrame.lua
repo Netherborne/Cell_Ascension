@@ -678,7 +678,8 @@ local function UpdateAll()
     UpdateNames()
 end
 
-menu:RegisterEvent("GROUP_ROSTER_UPDATE")
+-- menu:RegisterEvent("GROUP_ROSTER_UPDATE")
+Cell_RegisterForGroupRosterProxy(menu)
 menu:RegisterEvent("PLAYER_REGEN_ENABLED")
 menu:RegisterEvent("PLAYER_REGEN_DISABLED")
 menu:SetScript("OnEvent", function(self, event)

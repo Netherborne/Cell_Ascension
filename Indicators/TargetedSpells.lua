@@ -373,7 +373,7 @@ function I.CreateTargetedSpells(parent)
         frame.SetCooldown = SetCooldown
         -- frame:SetScript("OnShow", targetedSpells.UpdateSize)
         -- frame:SetScript("OnHide", targetedSpells.UpdateSize)
-        frame.cooldown:SetScript("OnCooldownDone", function()
+        frame.cooldown:SetScript("OnHide", function()
             frame:Hide()
         end)
     end

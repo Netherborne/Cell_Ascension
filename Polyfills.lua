@@ -368,31 +368,12 @@ end
 -- Ensures all created font strings have a default font set
 -- This prevents "Font not set" errors when calling SetText
 -------------------------------------------------
+-------------------------------------------------
+-- Frame CreateFontString polyfill for WotLK
+-- REMOVED TO PREVENT UI TAINT
+-------------------------------------------------
 do
-    local frame = CreateFrame("Frame")
-    local mt = getmetatable(frame)
-
-    if mt and mt.__index and not mt.__index._CellFontStringCreationPolyfill then
-        local origCreateFontString = mt.__index.CreateFontString
-
-        if origCreateFontString then
-            function mt.__index:CreateFontString(name, layer, inheritsFrom)
-                local fontString = origCreateFontString(self, name, layer, inheritsFrom)
-
-                -- WotLK Fix: If no font object was inherited, set a default font to prevent errors
-                -- Check if font is already set (from inheritsFrom)
-                local currentFont, currentSize, currentFlags = fontString:GetFont()
-                if not currentFont then
-                    -- Set a safe default font
-                    fontString:SetFont(STANDARD_TEXT_FONT, 12, "")
-                end
-
-                return fontString
-            end
-
-            mt.__index._CellFontStringCreationPolyfill = true
-        end
-    end
+    -- Removed
 end
 
 -- SmoothStatusBarMixin polyfill for WotLK
@@ -429,34 +410,7 @@ end
 -- We wrap it to ensure it always returns a valid texture
 -------------------------------------------------
 do
-    local sb = CreateFrame("StatusBar")
-    local mt = getmetatable(sb)
-
-    if mt and mt.__index then
-        local origGetStatusBarTexture = mt.__index.GetStatusBarTexture
-        local origSetStatusBarTexture = mt.__index.SetStatusBarTexture
-
-        -- Wrap SetStatusBarTexture to cache the texture path
-        if origSetStatusBarTexture then
-            function mt.__index:SetStatusBarTexture(texture, layer, sublayer)
-                self._cellCachedTexturePath = texture
-                return origSetStatusBarTexture(self, texture, layer, sublayer)
-            end
-        end
-
-        -- Wrap GetStatusBarTexture to ensure it returns a texture
-        if origGetStatusBarTexture then
-            function mt.__index:GetStatusBarTexture()
-                local tex = origGetStatusBarTexture(self)
-                -- If texture is nil but we have a cached path, try setting it again
-                if not tex and self._cellCachedTexturePath then
-                    origSetStatusBarTexture(self, self._cellCachedTexturePath)
-                    tex = origGetStatusBarTexture(self)
-                end
-                return tex
-            end
-        end
-    end
+    -- Removed to prevent UI taint
 end
 
 -------------------------------------------------
@@ -839,24 +793,7 @@ end
 
 -- Cooldown OnCooldownDone polyfill for 3.3.5a (ignore unsupported script type)
 do
-    local cd = CreateFrame("Cooldown")
-    local mt = getmetatable(cd)
-
-    if mt and mt.__index and not mt.__index._CellOnCooldownDoneShim then
-        local origSetScript = mt.__index.SetScript
-
-        function mt.__index:SetScript(scriptType, handler)
-            -- Retail-only script type; WotLK cooldowns don't support it
-            if scriptType == "OnCooldownDone" then
-                -- No native support in 3.3.5a; safely ignore
-                return
-            end
-
-            return origSetScript(self, scriptType, handler)
-        end
-
-        mt.__index._CellOnCooldownDoneShim = true
-    end
+    -- Removed to prevent UI taint
 end
 
 
@@ -1552,26 +1489,7 @@ end
 -- Ignore bad / nil reference frames instead of erroring.
 -------------------------------------------------
 do
-    local ok, test = pcall(CreateFrame, "Frame", nil, UIParent, "SecureHandlerStateTemplate")
-    if ok and test then
-        local mt = getmetatable(test)
-        if mt and mt.__index
-           and type(mt.__index.SetFrameRef) == "function"
-           and not mt.__index._CellSetFrameRefShim
-        then
-            local origSetFrameRef = mt.__index.SetFrameRef
-
-            function mt.__index:SetFrameRef(refKey, refFrame)
-                -- If the reference is missing or obviously not a frame, just ignore.
-                if not refFrame or type(refFrame) ~= "table" or type(refFrame.GetName) ~= "function" then
-                    return
-                end
-                return origSetFrameRef(self, refKey, refFrame)
-            end
-
-            mt.__index._CellSetFrameRefShim = true
-        end
-    end
+    -- Removed to prevent UI taint
 end
 
 
@@ -1857,31 +1775,7 @@ do
         end
     end
 
-    -- Automatically register frames that call RegisterEvent("GROUP_ROSTER_UPDATE")
-    do
-        local sample = CreateFrame("Frame")
-        local mt = sample and getmetatable(sample)
-        mt = mt and mt.__index
-        if mt and mt.RegisterEvent and not mt._CellGroupRosterHook then
-            hooksecurefunc(mt, "RegisterEvent", function(self, event)
-                if event == "GROUP_ROSTER_UPDATE" then
-                    Cell_RegisterForGroupRosterProxy(self)
-                end
-            end)
-
-            hooksecurefunc(mt, "UnregisterEvent", function(self, event)
-                if event == "GROUP_ROSTER_UPDATE" then
-                    Cell_UnregisterFromGroupRosterProxy(self)
-                end
-            end)
-
-            hooksecurefunc(mt, "UnregisterAllEvents", function(self)
-                Cell_UnregisterFromGroupRosterProxy(self)
-            end)
-
-            mt._CellGroupRosterHook = true
-        end
-    end
+    -- Hook removed to prevent taint. Addons must explicitly call Cell_RegisterForGroupRosterProxy.
 end
 
 -- LocalizedClassList
@@ -1974,37 +1868,7 @@ end
 -- We wrap SetValue to flag programmatic changes so callbacks can distinguish
 -------------------------------------------------
 do
-    local slider = CreateFrame("Slider")
-    local mt = getmetatable(slider)
-
-    if mt and mt.__index and not mt.__index._CellSliderPolyfillApplied then
-        local origSetValue = mt.__index.SetValue
-        local origSetScript = mt.__index.SetScript
-
-        -- Wrap SetValue to flag programmatic changes
-        function mt.__index:SetValue(value)
-            self._isProgrammaticChange = true
-            origSetValue(self, value)
-            self._isProgrammaticChange = false
-        end
-
-        -- Wrap SetScript to intercept OnValueChanged and fix userChanged parameter
-        function mt.__index:SetScript(scriptType, handler)
-            if scriptType == "OnValueChanged" and handler then
-                local wrappedHandler = function(self, value, userChanged)
-                    -- WRATH FIX: userChanged is nil in 3.3.5
-                    if userChanged == nil then
-                        userChanged = not self._isProgrammaticChange
-                    end
-                    return handler(self, value, userChanged)
-                end
-                return origSetScript(self, scriptType, wrappedHandler)
-            end
-            return origSetScript(self, scriptType, handler)
-        end
-
-        mt.__index._CellSliderPolyfillApplied = true
-    end
+    -- Removed to prevent UI taint
 end
 
 -------------------------------------------------

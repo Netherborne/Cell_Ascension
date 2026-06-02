@@ -2456,7 +2456,8 @@ end
 -------------------------------------------------
 local function UnitButton_RegisterEvents(self)
     -- self:RegisterEvent("PLAYER_ENTERING_WORLD")
-    self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    -- self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    Cell_RegisterForGroupRosterProxy(self)
 
     self:RegisterEvent("UNIT_HEALTH")
     self:RegisterEvent("UNIT_HEALTH_FREQUENT")
@@ -2472,6 +2473,8 @@ local function UnitButton_RegisterEvents(self)
     self:RegisterEvent("UNIT_DISPLAYPOWER")
 
     self:RegisterEvent("UNIT_AURA")
+    self:RegisterEvent("UNIT_ABSORB_AMOUNT_CHANGED")
+    self:RegisterEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED")
 
     self:RegisterEvent("UNIT_HEAL_PREDICTION")
 
@@ -2541,6 +2544,7 @@ end
 
 local function UnitButton_UnregisterEvents(self)
     self:UnregisterAllEvents()
+    Cell_UnregisterFromGroupRosterProxy(self)
 end
 
 local function UnitButton_OnEvent(self, event, unit, ...)
@@ -2574,6 +2578,12 @@ local function UnitButton_OnEvent(self, event, unit, ...)
 
         elseif event == "UNIT_HEAL_PREDICTION" or event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_DELAYED" then
             UnitButton_UpdateHealPrediction(self)
+
+        elseif event == "UNIT_ABSORB_AMOUNT_CHANGED" then
+            UnitButton_UpdateShieldAbsorbs(self)
+
+        elseif event == "UNIT_HEAL_ABSORB_AMOUNT_CHANGED" then
+            UnitButton_UpdateHealAbsorbs(self, true)
 
         elseif event == "UNIT_MAXPOWER" then
             UnitButton_UpdatePowerStates(self)

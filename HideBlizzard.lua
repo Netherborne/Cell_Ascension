@@ -1,69 +1,33 @@
 local _, Cell = ...
 local F = Cell.funcs
 
--- stolen from elvui
-local hiddenParent = CreateFrame("Frame", nil, _G.UIParent)
-hiddenParent:SetAllPoints()
-hiddenParent:Hide()
+-- We no longer use a hidden parent as it causes taint in modern/wrath clients.
+-- We use RegisterStateDriver to securely hide the frames instead.
 
-local function HideFrame(frame)
+local function SecureHide(frame)
     if not frame then return end
-
-    frame:UnregisterAllEvents()
-    frame:Hide()
-    frame:SetParent(hiddenParent)
-
-    local health = frame.healthBar or frame.healthbar
-    if health then
-        health:UnregisterAllEvents()
-    end
-
-    local power = frame.manabar
-    if power then
-        power:UnregisterAllEvents()
-    end
-
-    local spell = frame.castBar or frame.spellbar
-    if spell then
-        spell:UnregisterAllEvents()
-    end
-
-    local altpowerbar = frame.powerBarAlt
-    if altpowerbar then
-        altpowerbar:UnregisterAllEvents()
-    end
-
-    local buffFrame = frame.BuffFrame
-    if buffFrame then
-        buffFrame:UnregisterAllEvents()
-    end
-
-    local petFrame = frame.PetFrame
-    if petFrame then
-        petFrame:UnregisterAllEvents()
-    end
+    -- The secure way to hide default frames without tainting them
+    RegisterStateDriver(frame, "visibility", "hide")
 end
 
 function F.HideBlizzardParty()
     _G.UIParent:UnregisterEvent("GROUP_ROSTER_UPDATE")
 
     if _G.CompactPartyFrame then
-        _G.CompactPartyFrame:UnregisterAllEvents()
+        SecureHide(_G.CompactPartyFrame)
     end
 
     if _G.PartyFrame then
-        _G.PartyFrame:UnregisterAllEvents()
-        _G.PartyFrame:SetScript("OnShow", nil)
+        SecureHide(_G.PartyFrame)
         for frame in _G.PartyFrame.PartyMemberFramePool:EnumerateActive() do
-            HideFrame(frame)
+            SecureHide(frame)
         end
-        HideFrame(_G.PartyFrame)
     else
         for i = 1, 4 do
-            HideFrame(_G["PartyMemberFrame"..i])
-            HideFrame(_G["CompactPartyMemberFrame"..i])
+            SecureHide(_G["PartyMemberFrame"..i])
+            SecureHide(_G["CompactPartyMemberFrame"..i])
         end
-        HideFrame(_G.PartyMemberBackground)
+        if _G.PartyMemberBackground then _G.PartyMemberBackground:Hide() end
     end
 end
 
@@ -71,8 +35,7 @@ function F.HideBlizzardRaid()
     _G.UIParent:UnregisterEvent("GROUP_ROSTER_UPDATE")
 
     if _G.CompactRaidFrameContainer then
-        _G.CompactRaidFrameContainer:UnregisterAllEvents()
-        _G.CompactRaidFrameContainer:SetParent(hiddenParent)
+        SecureHide(_G.CompactRaidFrameContainer)
     end
 end
 
@@ -82,7 +45,6 @@ function F.HideBlizzardRaidManager()
     end
 
     if _G.CompactRaidFrameManager then
-        _G.CompactRaidFrameManager:UnregisterAllEvents()
-        _G.CompactRaidFrameManager:SetParent(hiddenParent)
+        SecureHide(_G.CompactRaidFrameManager)
     end
 end

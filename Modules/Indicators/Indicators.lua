@@ -427,13 +427,13 @@ local function InitIndicator(indicatorName)
         for i = 1, 3 do
             indicator[i]:HookScript("OnShow", function()
                 indicator[i]:SetCooldown(GetTime(), 13, types[i], "Interface\\Icons\\INV_Misc_QuestionMark", 7)
-                indicator[i].cooldown:SetScript("OnCooldownDone", function()
+                indicator[i].cooldown:SetScript("OnHide", function()
                     indicator[i]:SetCooldown(GetTime(), 13, types[i], "Interface\\Icons\\INV_Misc_QuestionMark", 7)
                 end)
             end)
             indicator[i]:HookScript("OnHide", function()
                 indicator[i].cooldown:Hide()
-                indicator[i].cooldown:SetScript("OnCooldownDone", nil)
+                indicator[i].cooldown:SetScript("OnHide", nil)
             end)
         end
 
@@ -479,13 +479,13 @@ local function InitIndicator(indicatorName)
         for _, f in ipairs(indicator) do
             f:HookScript("OnShow", function()
                 f:SetCooldown(GetTime(), 3, "Interface\\Icons\\ability_warlock_chaosbolt", 7)
-                f.cooldown:SetScript("OnCooldownDone", function()
+                f.cooldown:SetScript("OnHide", function()
                     f:SetCooldown(GetTime(), 3, "Interface\\Icons\\ability_warlock_chaosbolt", 7)
                 end)
             end)
             f:HookScript("OnHide", function()
                 f.cooldown:Hide()
-                f.cooldown:SetScript("OnCooldownDone", nil)
+                f.cooldown:SetScript("OnHide", nil)
             end)
         end
 
@@ -502,13 +502,13 @@ local function InitIndicator(indicatorName)
         for i = 1, 3 do
             indicator[i]:HookScript("OnShow", function()
                 indicator[i]:SetCooldown(GetTime(), 13, spells[i][1], spells[i][2], 7)
-                indicator[i].cooldown:SetScript("OnCooldownDone", function()
+                indicator[i].cooldown:SetScript("OnHide", function()
                     indicator[i]:SetCooldown(GetTime(), 13, spells[i][1], spells[i][2], 7)
                 end)
             end)
             indicator[i]:HookScript("OnHide", function()
                 indicator[i].cooldown:Hide()
-                indicator[i].cooldown:SetScript("OnCooldownDone", nil)
+                indicator[i].cooldown:SetScript("OnHide", nil)
             end)
         end
 

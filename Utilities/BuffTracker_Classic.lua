@@ -848,7 +848,8 @@ local function UpdateTools(which)
     if not which or which == "buffTracker" then
         if CellDB["tools"]["buffTracker"][1] then
             buffTrackerFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-            buffTrackerFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+            -- buffTrackerFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+            Cell_RegisterForGroupRosterProxy(buffTrackerFrame)
 
             if which == "buffTracker" then -- already in world, manually enabled
                 buffTrackerFrame:GROUP_ROSTER_UPDATE(true)
@@ -858,6 +859,7 @@ local function UpdateTools(which)
             end
         else
             buffTrackerFrame:UnregisterAllEvents()
+            Cell_UnregisterFromGroupRosterProxy(buffTrackerFrame)
 
             Reset()
             myUnit = ""

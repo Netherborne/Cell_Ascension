@@ -1000,7 +1000,8 @@ local function QuickCast_OnEvent(self, event, unit, arg1, arg2)
 end
 
 local function QuickCast_OnShow(self)
-    self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    -- self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    Cell_RegisterForGroupRosterProxy(self)
     -- self:RegisterEvent("PLAYER_ENTERING_WORLD")
     -- update all now
     self:CheckUnit()
@@ -1008,6 +1009,7 @@ end
 
 local function QuickCast_OnHide(self)
     self:UnregisterAllEvents()
+    Cell_UnregisterFromGroupRosterProxy(self)
 end
 
 -- ----------------------------------------------------------------------- --
@@ -1108,7 +1110,7 @@ CreateQuickCastButton = function(parent, name, isPreview)
     outerCD:SetScript("OnShow", function()
         b:Update()
     end)
-    outerCD:SetScript("OnHide", function()
+    outerCD:SetScript("OnCooldownDone", function()
         b:Update()
     end)
 
