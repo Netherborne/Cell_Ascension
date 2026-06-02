@@ -51,6 +51,7 @@ Check <https://github.com/enderneko/Cell/tree/master/.snippets> for more snippet
 ## Slash Commands
 
 Use **/cell** for more information.
+Use **/cell opt** to open config panel
 
 &nbsp;
 
