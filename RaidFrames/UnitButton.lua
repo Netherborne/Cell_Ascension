@@ -2734,7 +2734,7 @@ local function UnitButton_UnregisterEvents(self)
 end
 
 local function UnitButton_OnEvent(self, event, unit, arg)
-    if unit and (self.states.displayedUnit == unit or self.states.unit == unit) then
+    if type(unit) == "string" and (self.states.displayedUnit == unit or self.states.unit == unit) then
         if  event == "UNIT_ENTERED_VEHICLE" or event == "UNIT_EXITED_VEHICLE" or event == "UNIT_CONNECTION" then
             self._updateRequired = 1
             self._powerUpdateRequired = 1
