@@ -6,7 +6,7 @@ Make sure to folder name is Cell_Ascension for the addon to work.
 
 I recommend installing with gitAddonManager so that you get auto updates. It should name the folder properly by default.
 
-if a spell you want to bind is not shown use wowhead to get spellid like: https://www.wowhead.com/wotlk/spell=39013/heal    the spellid is 39013. when you are binding a spell click "edit" on the spell selection dropdown box and enter id
+if a spell you want to bind is not shown use wowhead to get spellid like: https://www.wowhead.com/wotlk/spell=39013/heal    the spellid is 39013. when you are binding a spell click "edit" on the spell selection dropdown box and enter id. or better yet: enable id on tooltip (ingame press Esc- interface- help- check setting) and use the id that you now see
 
 # Change log:
 
