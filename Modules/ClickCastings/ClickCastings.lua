@@ -693,6 +693,16 @@ local function ShowUnitMenu(button)
     end
 end
 
+local function IsBoundMenuAction(button, bindKey)
+    if not bindKey then return false end
+
+    if button:GetAttribute(bindKey) == "togglemenu" then
+        return true
+    end
+
+    return button:GetAttribute("menu") == bindKey and not InCombatLockdown()
+end
+
 function F.UpdateClickCastOnFrame(frame, snippet)
     if frame then
         if not frame._menuPostClickHooked then
@@ -711,7 +721,7 @@ function F.UpdateClickCastOnFrame(frame, snippet)
                 end
 
                 local bindKey = GetPostClickBindKey(button, modifier)
-                if bindKey and self:GetAttribute(bindKey) == "togglemenu" then
+                if IsBoundMenuAction(self, bindKey) then
                     ShowUnitMenu(self)
                 end
             end)
