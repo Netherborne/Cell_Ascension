@@ -18,11 +18,11 @@ fixes to the ZB version:
 
 3- fixed the "menu" action under clickCasting to work when binded to mouse keys like for example: control+rightClick
 
+4- "strata" set to low as default so addon frames stay behind normal UI frames
+
 # Known issues:
 
 1- Heal prediction is not working perfectly right 100% of the times, but it mostly works, neither it was with ascension default frames. will try to fix
-
-2- Addon frames stay on top of other frames. should stay behind. fixing
 
 # New features: 
 
