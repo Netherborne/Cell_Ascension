@@ -26,11 +26,11 @@ fixes to the ZB version:
 
 # Known issues:
 
-1- Heal prediction is not working perfectly right 100% of the times, but it mostly works, neither it was with ascension default frames. will try to fix
+CoA realm don't work properly at least for now. not sure when this will be supported
 
 # New features: 
 
-1- Sort by role (completed, works same as the retail/classic addon)
+1- Sort by role (completed, works same as the retail/classic addon) - tested in random dungeon finder only.
 
 # Upcoming features:
 

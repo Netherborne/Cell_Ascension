@@ -2,9 +2,16 @@ to test range check:
 
 /run CellRangeCheckDebug:Show()
 
+-----------------------------
 
 to check addon usage ram -- only use this to test out addons, it reduces FPS by a lot:
 
 /run GarbageCollectionUtil.SetAllowUpdateMemoryUsage(true)
 turn off with: 
 /run SetCVar("scriptProfile", "0") ReloadUI()
+
+-----------------------------
+
+to check party roles for example to fix sort by role feature:
+
+/cell roledump

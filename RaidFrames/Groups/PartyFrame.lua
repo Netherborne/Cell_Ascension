@@ -2,6 +2,8 @@ local _, Cell = ...
 local F = Cell.funcs
 local B = Cell.bFuncs
 local P = Cell.pixelPerfectFuncs
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
+local UnitExists = UnitExists
 
 local partyFrame = CreateFrame("Frame", "CellPartyFrame", Cell.frames.mainFrame, "SecureFrameTemplate")
 Cell.frames.partyFrame = partyFrame
@@ -113,6 +115,62 @@ for i = 1, 5 do
     _G[buttonName] = playerButton
 end
 
+local function GetPartyButtonRole(button)
+    local unit = button and button:GetAttribute("unit")
+    if not unit then return "NONE" end
+
+    local isTank, isHealer, isDamage = UnitGroupRolesAssigned(unit)
+    if type(isTank) == "string" then
+        return isTank
+    end
+    if isTank then return "TANK" end
+    if isHealer then return "HEALER" end
+    if isDamage then return "DAMAGER" end
+    return "NONE"
+end
+
+local function GetAnchoredPartyButtons(layout)
+    local orderedButtons = {}
+    local roleIndex = {}
+
+    if layout["main"]["roleOrder"] then
+        for index, role in ipairs(layout["main"]["roleOrder"]) do
+            roleIndex[role] = index
+        end
+    end
+    roleIndex["NONE"] = roleIndex["NONE"] or (#roleIndex + 1)
+
+    for index, button in ipairs(manualButtons) do
+        local unit = button:GetAttribute("unit")
+        local include = unit and UnitExists(unit)
+
+        if include and not (layout["main"]["hideSelf"] and unit == "player") then
+            table.insert(orderedButtons, {
+                button = button,
+                role = GetPartyButtonRole(button),
+                index = index,
+            })
+        end
+    end
+
+    if layout["main"]["sortByRole"] then
+        table.sort(orderedButtons, function(left, right)
+            local leftIndex = roleIndex[left.role] or roleIndex["NONE"]
+            local rightIndex = roleIndex[right.role] or roleIndex["NONE"]
+            if leftIndex == rightIndex then
+                return left.index < right.index
+            end
+            return leftIndex < rightIndex
+        end)
+    end
+
+    for index, entry in ipairs(orderedButtons) do
+        orderedButtons[index] = entry.button
+    end
+
+    return orderedButtons
+end
+
 header:SetAttribute("startingIndex", 1)
 header:Show()
 
@@ -210,7 +268,7 @@ local function PartyFrame_UpdateLayout(layout, which)
     end
 
     -- anchor
-    if not which or which == "main-arrangement" or which == "pet-arrangement" then
+    if not which or which == "main-arrangement" or which == "pet-arrangement" or which == "sort" or which == "hideSelf" then
         local orientation = layout["main"]["orientation"]
         local anchor = layout["main"]["anchor"]
         local spacingX = layout["main"]["spacingX"]
@@ -276,32 +334,33 @@ local function PartyFrame_UpdateLayout(layout, which)
         header:SetPoint(point)
         header:SetAttribute("point", headerPoint)
 
-        --! WotLK 3.3.5a: SecureGroupHeaderTemplate doesn't position buttons automatically in WotLK
-        --! Manually position each button
-        for j = 1, 5 do
-            if manualButtons[j] then
-                manualButtons[j]:ClearAllPoints()
+        --! WotLK 3.3.5a: SecureGroupHeaderTemplate doesn't position buttons automatically in WotLK.
+        --! Sort the manually created buttons ourselves before anchoring them.
+        local anchoredButtons = GetAnchoredPartyButtons(layout)
 
-                if j == 1 then
-                    -- First button anchors its corner to header
-                    manualButtons[j]:SetPoint(point, header, headerPoint, 0, 0)
+        for _, button in ipairs(manualButtons) do
+            button:ClearAllPoints()
+            if button.petButton then
+                button.petButton:ClearAllPoints()
+            end
+        end
+
+        for j, button in ipairs(anchoredButtons) do
+            if j == 1 then
+                button:SetPoint(point, header, headerPoint, 0, 0)
+            else
+                if orientation == "vertical" then
+                    button:SetPoint(point, anchoredButtons[j-1], playerAnchorPoint, 0, P.Scale(playerSpacing))
                 else
-                    -- Subsequent buttons anchor to previous button
-                    if orientation == "vertical" then
-                        manualButtons[j]:SetPoint(point, manualButtons[j-1], playerAnchorPoint, 0, P.Scale(playerSpacing))
-                    else
-                        manualButtons[j]:SetPoint(point, manualButtons[j-1], playerAnchorPoint, P.Scale(playerSpacing), 0)
-                    end
+                    button:SetPoint(point, anchoredButtons[j-1], playerAnchorPoint, P.Scale(playerSpacing), 0)
                 end
+            end
 
-                -- Position pet button
-                if manualButtons[j].petButton then
-                    manualButtons[j].petButton:ClearAllPoints()
-                    if orientation == "vertical" then
-                        manualButtons[j].petButton:SetPoint(point, manualButtons[j], petAnchorPoint, P.Scale(petSpacing), 0)
-                    else
-                        manualButtons[j].petButton:SetPoint(point, manualButtons[j], petAnchorPoint, 0, P.Scale(petSpacing))
-                    end
+            if button.petButton then
+                if orientation == "vertical" then
+                    button.petButton:SetPoint(point, button, petAnchorPoint, P.Scale(petSpacing), 0)
+                else
+                    button.petButton:SetPoint(point, button, petAnchorPoint, 0, P.Scale(petSpacing))
                 end
             end
         end

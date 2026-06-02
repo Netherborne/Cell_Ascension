@@ -858,6 +858,60 @@ end)
 SLASH_CELL1 = "/cell"
 
 
+local function Cell_FormatAssignedRole(unit)
+    local a, b, c = UnitGroupRolesAssigned(unit)
+
+    if type(a) == "string" then
+        return a
+    end
+
+    if a then return "TANK" end
+    if b then return "HEALER" end
+    if c then return "DAMAGER" end
+    return "NONE"
+end
+
+local function Cell_DumpRoles()
+    F.Print("Role dump start")
+
+    if IsInRaid() then
+        for i = 1, GetNumRaidMembers() do
+            local name, _, subgroup, _, _, class, _, _, _, role, _, combatRole = GetRaidRosterInfo(i)
+            local unit = "raid" .. i
+            if name then
+                local assignedRole = Cell_FormatAssignedRole(unit)
+                print(string.format(
+                    "[Cell RoleDump] %s unit=%s subgroup=%s class=%s assigned=%s rosterRole=%s combatRole=%s",
+                    name,
+                    unit,
+                    tostring(subgroup),
+                    tostring(class),
+                    tostring(assignedRole),
+                    tostring(role),
+                    tostring(combatRole)
+                ))
+            end
+        end
+    else
+        local units = {"player", "party1", "party2", "party3", "party4"}
+        for _, unit in ipairs(units) do
+            if UnitExists(unit) then
+                local assignedRole = Cell_FormatAssignedRole(unit)
+                print(string.format(
+                    "[Cell RoleDump] %s unit=%s assigned=%s mt=%s ma=%s",
+                    UnitName(unit) or unit,
+                    unit,
+                    tostring(assignedRole),
+                    tostring(GetPartyAssignment("MAINTANK", unit)),
+                    tostring(GetPartyAssignment("MAINASSIST", unit))
+                ))
+            end
+        end
+    end
+
+    F.Print("Role dump end")
+end
+
 function SlashCmdList.CELL(msg, editbox)
     local command, rest = msg:match("^(%S*)%s*(.-)$")
     command = strlower(command or "")
@@ -878,6 +932,9 @@ function SlashCmdList.CELL(msg, editbox)
         else
             F.Print("Role debug function not available.")
         end
+
+    elseif command == "roledump" then
+        Cell_DumpRoles()
 
     elseif command == "options" or command == "opt" then
         F.ShowOptionsFrame()
