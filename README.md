@@ -8,9 +8,12 @@ I recommend installing with gitAddonManager so that you get auto updates. It sho
 
 if a spell you want to bind is not shown use wowhead to get spellid like: https://www.wowhead.com/wotlk/spell=39013/heal    the spellid is 39013. when you are binding a spell click "edit" on the spell selection dropdown box and enter id
 
-# chnage log:
-fixes to the ZB version
+# Change log:
+
+fixes to the ZB version:
+
 1- click casting bindings to keyboard keys work
+
 2- range check logic now works properly where before it would fade out at 28 yards. Tested for priest after you learn renew may need testing on other classes
 
 
