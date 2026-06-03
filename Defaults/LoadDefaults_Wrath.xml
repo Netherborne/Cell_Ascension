@@ -5,5 +5,5 @@
     <Script file="Indicator_DefaultSpells_Wrath.lua"/>
     <Script file="Appearance_Defaults.lua"/>
     <Script file="Layout_Defaults_Cata_Wrath.lua"/>
-    <Script file="ClickCasting_DefaultSpells_Wrath.lua"/>
+    <Script file="ClickCasting_DefaultSpells_Ascension.lua"/>
 </Ui>
