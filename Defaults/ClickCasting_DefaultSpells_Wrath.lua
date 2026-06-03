@@ -170,6 +170,122 @@ local defaultSpells = {
             "50720T", -- 警戒
         },
     },
+	["HERO"] = {
+        ["common"] = {
+         
+        },
+    },
+	["PROPHET"] = {
+        ["common"] = {
+         
+        },
+    },
+	["FLESHWARDEN"] = {
+        ["common"] = {
+         
+        },
+    },
+	["RANGER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["PYROMANCER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["WITCHHUNTER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["STARCALLER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["SPIRITMAGE"] = {
+        ["common"] = {
+         
+        },
+    },
+	["CULTIST"] = {
+        ["common"] = {
+         
+        },
+    },
+	["TINKER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["SUNCLERIC"] = {
+        ["common"] = {
+         
+        },
+    },
+	["NECROMANCER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["WILDWALKER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["CHRONOMANCER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["STORMBRINGER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["SONOFARUGAL"] = {
+        ["common"] = {
+         
+        },
+    },
+	["REAPER"] = {
+        ["common"] = {
+         
+        },
+    },
+	["GUARDIAN"] = {
+        ["common"] = {
+         
+        },
+    },
+	["MONK"] = {
+        ["common"] = {
+         
+        },
+    },
+	["BARBARIAN"] = {
+        ["common"] = {
+         
+        },
+    },
+	["WITCHDOCTOR"] = {
+        ["common"] = {
+         806240, -- Hexbreak
+         801661, -- Potion Toss
+         801696, -- Spirit in a Bottle
+         801670, -- Loa's Brew
+         804049, -- Allcure Elixir
+         707671, -- Power Wuju
+         560294, -- Spirit Wuju
+        },
+    },
+	["DEMONHUNTER"] = {
+        ["common"] = {
+         
+        },
+    },
 }
 
 function F.GetClickCastingSpellList(class)
@@ -263,6 +379,7 @@ local normalResurrection = {
     ["PALADIN"] = 7328,
     ["PRIEST"] = 2006,
     ["SHAMAN"] = 2008,
+    ["WITCHDOCTOR"] = 801796
 }
 
 do
