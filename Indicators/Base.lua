@@ -620,12 +620,22 @@ local function BarIcon_SetCooldown(frame, start, duration, debuffType, texture, 
         frame:SetBackdropColor(0, 0, 0)
     end
 
+    local isNew = not frame:IsShown()
     frame.icon:SetTexture(texture)
     frame.stack:SetText((count == 0 or count == 1) and "" or count)
     frame:Show()
 
-    if refreshing then
-        frame.ag:Play()
+    if frame.showJumpingAnimation == false then
+        -- jumping disabled
+    elseif frame.showJumpingAnimation == true then
+        if refreshing or isNew then
+            frame.ag:Play()
+        end
+    else
+        -- default behavior
+        if refreshing then
+            frame.ag:Play()
+        end
     end
 end
 
@@ -636,6 +646,10 @@ local function BarIcon_ShowAnimation(frame, show)
     else
         frame.cooldown:Hide()
     end
+end
+
+local function BarIcon_ShowJumpingAnimation(frame, show)
+    frame.showJumpingAnimation = show
 end
 
 local function BarIcon_UpdatePixelPerfect(frame)
@@ -685,6 +699,7 @@ function I.CreateAura_BarIcon(name, parent)
     frame.ShowDuration = Shared_ShowDuration
     frame.ShowStack = Shared_ShowStack
     frame.ShowAnimation = BarIcon_ShowAnimation
+    frame.ShowJumpingAnimation = BarIcon_ShowJumpingAnimation
     frame.SetupGlow = Shared_SetupGlow
     frame.UpdatePixelPerfect = BarIcon_UpdatePixelPerfect
 
@@ -896,6 +911,14 @@ local function Icons_ShowAnimation(icons, show)
     end
 end
 
+local function Icons_ShowJumpingAnimation(icons, show)
+    for i = 1, icons.maxNum do
+        if icons[i].ShowJumpingAnimation then
+            icons[i]:ShowJumpingAnimation(show)
+        end
+    end
+end
+
 local function Icons_UpdatePixelPerfect(icons)
     P.Repoint(icons)
     P.Resize(icons)
@@ -926,6 +949,7 @@ function I.CreateAura_Icons(name, parent, num)
     icons.ShowDuration = Icons_ShowDuration
     icons.ShowStack = Icons_ShowStack
     icons.ShowAnimation = Icons_ShowAnimation
+    icons.ShowJumpingAnimation = Icons_ShowJumpingAnimation
     icons.SetupGlow = I.Glow_SetupForChildren
     icons.UpdatePixelPerfect = Icons_UpdatePixelPerfect
 

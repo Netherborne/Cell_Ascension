@@ -106,6 +106,14 @@ function I.Cooldowns_ShowAnimation(self, show)
     end
 end
 
+function I.Cooldowns_ShowJumpingAnimation(self, show)
+    for i = 1, #self do
+        if self[i].ShowJumpingAnimation then
+            self[i]:ShowJumpingAnimation(show)
+        end
+    end
+end
+
 function I.Cooldowns_UpdatePixelPerfect(self)
     P.Repoint(self)
     for i = 1, #self do
@@ -514,6 +522,7 @@ function I.CreateDebuffs(parent)
 
     debuffs.ShowDuration = I.Cooldowns_ShowDuration
     debuffs.ShowAnimation = I.Cooldowns_ShowAnimation
+    debuffs.ShowJumpingAnimation = I.Cooldowns_ShowJumpingAnimation
     debuffs.UpdatePixelPerfect = I.Cooldowns_UpdatePixelPerfect
 
     debuffs.ShowTooltip = Debuffs_ShowTooltip
