@@ -636,60 +636,62 @@ local function GetPostClickBindKey(button, modifier)
     return "type-"..button
 end
 
-local function ShowUnitMenu(button)
-    if InCombatLockdown() then return end
+local cellRaidDropdown = CreateFrame("Frame", "CellRaidDropdown", UIParent, "UIDropDownMenuTemplate")
 
+local function ShowUnitMenu(button)
     local unit = button:GetAttribute("unit")
     if not unit or not UnitExists(unit) then return end
 
+    HideDropDownMenu(1)
+
+    local menuFrame
     if UnitIsUnit(unit, "player") then
-        if PlayerFrameDropDown then
-            ToggleDropDownMenu(1, nil, PlayerFrameDropDown, "cursor")
-        end
-        return
+        menuFrame = PlayerFrameDropDown
+    elseif unit == "pet" or unit == "vehicle" then
+        menuFrame = PetFrameDropDown
+    elseif unit == "target" then
+        menuFrame = TargetFrameDropDown
+    elseif unit == "focus" then
+        menuFrame = FocusFrameDropDown
+    elseif strfind(unit, "^party%d+$") then
+        local unitID = tonumber(strmatch(unit, "(%d+)$"))
+        menuFrame = unitID and _G["PartyMemberFrame"..unitID.."DropDown"]
+    elseif strfind(unit, "^raid%d+$") and RaidFrameDropDown_Initialize then
+        local unitID = tonumber(strmatch(unit, "(%d+)$"))
+        cellRaidDropdown.displayMode = "MENU"
+        cellRaidDropdown.initialize = RaidFrameDropDown_Initialize
+        cellRaidDropdown.userData = unitID
+        cellRaidDropdown.unit = unit
+        cellRaidDropdown.name = UnitName(unit)
+        cellRaidDropdown.id = unitID
+        menuFrame = cellRaidDropdown
     end
 
-    if unit == "pet" or unit == "vehicle" then
-        if PetFrameDropDown then
-            ToggleDropDownMenu(1, nil, PetFrameDropDown, "cursor")
+    if menuFrame then
+        -- Temporarily remove SET_FOCUS and CLEAR_FOCUS to prevent taint errors
+        local originalMenus = {}
+        for menuType, menu in pairs(UnitPopupMenus) do
+            local filtered = {}
+            local changed = false
+            for _, v in ipairs(menu) do
+                if v == "SET_FOCUS" or v == "CLEAR_FOCUS" then
+                    changed = true
+                else
+                    table.insert(filtered, v)
+                end
+            end
+            if changed then
+                originalMenus[menuType] = menu
+                UnitPopupMenus[menuType] = filtered
+            end
         end
-        return
-    end
 
-    if unit == "target" then
-        if TargetFrameDropDown then
-            ToggleDropDownMenu(1, nil, TargetFrameDropDown, "cursor")
-        end
-        return
-    end
-
-    if unit == "focus" then
-        if FocusFrameDropDown then
-            ToggleDropDownMenu(1, nil, FocusFrameDropDown, "cursor")
-        end
-        return
-    end
-
-    local unitID = tonumber(strmatch(unit, "(%d+)$"))
-    if strfind(unit, "^party%d+$") then
-        local dropdown = unitID and _G["PartyMemberFrame"..unitID.."DropDown"]
-        if dropdown then
-            ToggleDropDownMenu(1, nil, dropdown, "cursor")
-        end
-        return
-    end
-
-    if strfind(unit, "^raid%d+$") and FriendsDropDown and RaidFrameDropDown_Initialize and unitID then
-        HideDropDownMenu(1)
-
-        local menuFrame = FriendsDropDown
-        menuFrame.displayMode = "MENU"
-        menuFrame.initialize = RaidFrameDropDown_Initialize
-        menuFrame.userData = unitID
-        menuFrame.unit = unit
-        menuFrame.name = UnitName(unit)
-        menuFrame.id = unitID
         ToggleDropDownMenu(1, nil, menuFrame, "cursor")
+
+        -- Restore original menus
+        for menuType, menu in pairs(originalMenus) do
+            UnitPopupMenus[menuType] = menu
+        end
     end
 end
 
@@ -714,12 +716,8 @@ function F.UpdateClickCastOnFrame(frame, snippet)
             frame:HookScript("PostClick", function(self, button)
                 local modifier = self._menuClickModifier or ""
                 self._menuClickModifier = nil
-
+                
                 local modifiedMouse = modifier ~= ""
-                if not modifiedMouse and (button == "LeftButton" or button == "RightButton" or button == "MiddleButton" or strmatch(button, "^Button%d+$")) then
-                    return
-                end
-
                 local bindKey = GetPostClickBindKey(button, modifier)
                 if IsBoundMenuAction(self, bindKey) then
                     ShowUnitMenu(self)
