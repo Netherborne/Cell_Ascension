@@ -153,6 +153,11 @@ end
 local GetNearestPixelSize = PixelUtil.GetNearestPixelSize
 
 function P.Scale(desiredPixels)
+        local size = GetNearestPixelSize(desiredPixels, CellParent:GetEffectiveScale())
+    -- Fix for 3.3.5 client bug: edgeSize < 1 causes black textures at low resolutions
+    if desiredPixels and desiredPixels >= 1 and size < 1 then
+        return 1
+    end
     return GetNearestPixelSize(desiredPixels, CellParent:GetEffectiveScale())
 end
 
@@ -349,7 +354,12 @@ end
 local GetNearestPixelSize = PixelUtil.GetNearestPixelSize
 
 function P.Scale(desiredPixels)
-    return GetNearestPixelSize(desiredPixels, CellParent:GetEffectiveScale())
+    local size = GetNearestPixelSize(desiredPixels, CellParent:GetEffectiveScale())
+    -- Fix for 3.3.5 client bug: edgeSize < 1 causes black textures at low resolutions
+    if desiredPixels and desiredPixels >= 1 and size < 1 then
+        return 1
+    end
+    return size
 end
 
 function P.Size(frame, width, height)

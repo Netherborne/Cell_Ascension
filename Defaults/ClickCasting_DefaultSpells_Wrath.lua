@@ -97,37 +97,35 @@ local defaultSpells = {
     ["PRIEST"] = {
         ["common"] = {
             -- Discipline
-            17, -- 真言术：盾
-            "47540T", -- 苦修
+            17, -- Power Word: Shield Rank 1
+            "47540T", -- Penance Rank 1
             -- Holy
-            2061, -- 快速治疗
-            2050, -- 次级治疗术
-            2054, -- 治疗术
-            2060, -- 强效治疗术
-            139, -- 恢复
-            33076, -- 愈合祷言
-            596, -- 治疗祷言
-            "34861T", -- 治疗之环
-            "47788T", -- 守护之魂
+            2061, -- Flash Heal Rank 1
+            2050, -- Greater Heal Rank 1
+            139, -- Renew Rank 1
+            33076, -- Prayer of Mending Rank 1
+            596, -- Prayer of Healing Rank 1
+            "34861T", -- Circle of Healing Rank 1
+            "47788T", -- Guardian Spirit 
             -- dispel
-            527, -- 驱散魔法
-            552, -- 驱除疾病
-            528, -- 祛病术
+            527, -- Dispel Magic Rank 1
+            552, -- Abolish Disease 
+            528, -- Cure Disease 
             -- resurrect
             2006, -- 复活术
             -- buff
-            "10060T", -- 能量灌注
-            "33206T", -- 痛苦压制
-            1706, -- 漂浮术
-            6346, -- 防护恐惧结界
-            1243, -- 真言术：韧
-            21562, -- 坚韧祷言
-            14752, -- 神圣之灵
-            27681, -- 精神祷言
-            976, -- 暗影防护
-            27683, -- 暗影防护祷言
+            "10060T", -- Power Infusion 
+            "33206T", -- Pain Suppression 
+            1706, -- Levitate 
+            6346, -- Fear Ward 
+            1243, -- Power Word: Fortitude Rank 1
+            21562, -- Prayer of Fortitude Rank 1
+            14752, -- Divine Spirit Rank 1
+            27681, -- Prayer of Spirit Rank 1
+            976, -- Shadow Protection Rank 1
+            27683, -- Prayer of Shadow Protection Rank 1
             -- other
-            2096, -- 心灵视界
+            2096, -- Mind Vision Rank 1
         },
     },
 
@@ -335,7 +333,9 @@ local resurrections_for_dead = {
 do
     local temp = {}
     for _, id in pairs(resurrections_for_dead) do
-        temp[F.GetSpellInfo(id)] = true
+        if F.GetSpellInfo(id) then
+            temp[F.GetSpellInfo(id)] = true
+        end
     end
     resurrections_for_dead = temp
 end
