@@ -335,7 +335,9 @@ local resurrections_for_dead = {
 do
     local temp = {}
     for _, id in pairs(resurrections_for_dead) do
-        temp[F.GetSpellInfo(id)] = true
+        if F.GetSpellInfo(id) then
+            temp[F.GetSpellInfo(id)] = true
+        end
     end
     resurrections_for_dead = temp
 end
