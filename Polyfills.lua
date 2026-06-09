@@ -1639,14 +1639,7 @@ end
 -- In WotLK 3.3.5a, PlaySound signature is different from retail
 -- Store original PlaySound and wrap it to handle errors gracefully
 do
-    local _originalPlaySound = PlaySound
-    if _originalPlaySound then
-        PlaySound = function(soundKit, channel)
-            -- In WotLK, PlaySound only takes soundFile/soundName, not soundKitID + channel
-            -- Silently fail if sound doesn't work
-            pcall(_originalPlaySound, soundKit)
-        end
-    end
+-- PlaySound wrapper removed as overwriting the global function taints the UI's secure execution paths.
 end
 
 -- GetNormalizedRealmName
