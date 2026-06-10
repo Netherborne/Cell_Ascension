@@ -2472,7 +2472,6 @@ local function UnitButton_RegisterEvents(self)
     Cell_RegisterForGroupRosterProxy(self)
 
     self:RegisterEvent("UNIT_HEALTH")
-    self:RegisterEvent("UNIT_HEALTH_FREQUENT")
     self:RegisterEvent("UNIT_MAXHEALTH")
 
     self:RegisterEvent("UNIT_POWER")
@@ -2489,13 +2488,6 @@ local function UnitButton_RegisterEvents(self)
     self:RegisterEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED")
 
     self:RegisterEvent("UNIT_HEAL_PREDICTION")
-
-    -- Fix: Register spellcast events for immediate update on player cast
-    self:RegisterEvent("UNIT_SPELLCAST_START")
-    self:RegisterEvent("UNIT_SPELLCAST_STOP")
-    self:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-    self:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-    self:RegisterEvent("UNIT_SPELLCAST_DELAYED")
 
     self:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
     self:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
@@ -2581,14 +2573,14 @@ local function UnitButton_OnEvent(self, event, unit, ...)
             UnitButton_UpdateShieldAbsorbs(self)
             UnitButton_UpdateHealAbsorbs(self, true)
 
-        elseif event == "UNIT_HEALTH" or event == "UNIT_HEALTH_FREQUENT" then
+        elseif event == "UNIT_HEALTH" then
             UnitButton_UpdateHealth(self)
             UnitButton_UpdateHealPrediction(self)
             UnitButton_UpdateShieldAbsorbs(self)
             UnitButton_UpdateHealAbsorbs(self, true)
             -- UnitButton_UpdateStatusText(self)
 
-        elseif event == "UNIT_HEAL_PREDICTION" or event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_DELAYED" then
+        elseif event == "UNIT_HEAL_PREDICTION" then
             UnitButton_UpdateHealPrediction(self)
 
         elseif event == "UNIT_ABSORB_AMOUNT_CHANGED" then
