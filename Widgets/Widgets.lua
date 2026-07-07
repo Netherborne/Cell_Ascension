@@ -1195,6 +1195,10 @@ function Cell.CreateSlider(name, parent, low, high, width, step, onValueChangedF
 
     local oldValue
     slider:SetScript("OnValueChanged", function(self, value, userChanged)
+        if userChanged == nil then
+            userChanged = IsMouseButtonDown("LeftButton")
+        end
+
         if oldValue == value then return end
         oldValue = value
 
