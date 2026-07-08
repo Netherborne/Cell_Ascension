@@ -223,6 +223,7 @@ function eventFrame:ADDON_LOADED(arg1)
                 },
                 ["useCleuHealthUpdater"] = false,
                 ["translit"] = false,
+                ["customRangeSpell"] = 0,
             }
         end
     

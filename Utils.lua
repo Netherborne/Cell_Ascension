@@ -2356,7 +2356,12 @@ CELL_RANGE_CHECK_DEAD = {}
 CELL_RANGE_CHECK_PET = {}
 
 local function SPELLS_CHANGED()
-    spell_friend = CELL_RANGE_CHECK_FRIENDLY[playerClass] or friendSpells[playerClass]
+    local customRangeSpell = CellDB and CellDB["general"] and CellDB["general"]["customRangeSpell"]
+    if customRangeSpell and customRangeSpell ~= 0 then
+        spell_friend = tonumber(customRangeSpell)
+    else
+        spell_friend = CELL_RANGE_CHECK_FRIENDLY[playerClass] or friendSpells[playerClass]
+    end
     spell_harm = CELL_RANGE_CHECK_HOSTILE[playerClass] or harmSpells[playerClass]
     spell_dead = CELL_RANGE_CHECK_DEAD[playerClass] or deadSpells[playerClass]
     spell_pet = CELL_RANGE_CHECK_PET[playerClass] or petSpells[playerClass]
@@ -2398,6 +2403,7 @@ end
 
 rc:SetScript("OnEvent", DELAYED_SPELLS_CHANGED)
 SPELLS_CHANGED()
+Cell.RegisterCallback("UpdateRangeCheckSpell", "UpdateRangeCheckSpell", SPELLS_CHANGED)
 
 function F.IsInRange(unit, check)
     if not UnitIsVisible(unit) then

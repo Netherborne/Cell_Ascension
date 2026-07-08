@@ -303,10 +303,27 @@ end
 -------------------------------------------------
 -- misc
 -------------------------------------------------
-local alwaysUpdateAurasCB, useCleuCB, translitCB
+local alwaysUpdateAurasCB, useCleuCB, translitCB, customRangeSpellBtn
+
+local function UpdateCustomRangeSpellBtn()
+    local spellId = CellDB["general"]["customRangeSpell"]
+    if not spellId or spellId == 0 then
+        customRangeSpellBtn:SetText(L["None"])
+        customRangeSpellBtn:SetTexture(nil)
+    else
+        local name, icon = F.GetSpellInfo(spellId)
+        if name then
+            customRangeSpellBtn:SetText(name)
+            customRangeSpellBtn:SetTexture(icon, {16, 16}, {"LEFT", 2, 0})
+        else
+            customRangeSpellBtn:SetText("|cFFFF3030"..L["Invalid"])
+            customRangeSpellBtn:SetTexture(nil)
+        end
+    end
+end
 
 local function CreateMiscPane()
-    local miscPane = Cell.CreateTitledPane(generalTab, L["Misc"], 205, 130)
+    local miscPane = Cell.CreateTitledPane(generalTab, L["Misc"], 205, 150)
     miscPane:SetPoint("TOPLEFT", generalTab, 222, -300)
 
     alwaysUpdateAurasCB = Cell.CreateCheckButton(miscPane, L["Always Update Auras"], function(checked, self)
@@ -327,6 +344,51 @@ local function CreateMiscPane()
         Cell.Fire("TranslitNames")
     end)
     translitCB:SetPoint("TOPLEFT", useCleuCB, "BOTTOMLEFT", 0, -9)
+
+    -- custom range check spell
+    local customRangeSpellText = miscPane:CreateFontString(nil, "OVERLAY", "Cell_Ascension_FONT_WIDGET")
+    customRangeSpellText:SetPoint("TOPLEFT", translitCB, "BOTTOMLEFT", 0, -9)
+    customRangeSpellText:SetText(L["Range Check Spell ID"])
+
+    customRangeSpellBtn = Cell.CreateButton(miscPane, L["None"], "transparent-hover", {195, 20})
+    customRangeSpellBtn:SetPoint("TOPLEFT", customRangeSpellText, "BOTTOMLEFT", 0, -2)
+    customRangeSpellBtn:SetScript("OnClick", function()
+        local peb = Cell.CreatePopupEditBox(miscPane, function(text)
+            text = tonumber(text) or 0
+            CellDB["general"]["customRangeSpell"] = text
+            Cell.Fire("UpdateRangeCheckSpell")
+            UpdateCustomRangeSpellBtn()
+        end)
+        peb:SetPoint("TOPLEFT", customRangeSpellBtn)
+        peb:SetPoint("BOTTOMRIGHT", customRangeSpellBtn)
+        peb:SetTips("|cffababab"..L["Input spell id"].."\n"..L["Enter: apply\nESC: discard"])
+        peb:ShowEditBox(CellDB["general"]["customRangeSpell"] == 0 and "" or CellDB["general"]["customRangeSpell"])
+        peb:SetNumeric(true)
+        if not peb.tooltipAdded then
+            peb.tooltipAdded = true
+            peb:SetScript("OnTextChanged", function()
+                local spellId = tonumber(peb:GetText())
+                if not spellId then
+                    CellSpellTooltip:Hide()
+                    return
+                end
+
+                local name, icon = F.GetSpellInfo(spellId)
+                if not name then
+                    CellSpellTooltip:Hide()
+                    return
+                end
+
+                CellSpellTooltip:SetOwner(peb, "ANCHOR_NONE")
+                CellSpellTooltip:SetPoint("TOPLEFT", peb, "BOTTOMLEFT", 0, -1)
+                Cell.Polyfill.SetSpellByID(CellSpellTooltip, spellId, icon)
+                CellSpellTooltip:Show()
+            end)
+            Cell.Polyfill.HookScript(peb, "OnHide", function()
+                CellSpellTooltip:Hide()
+            end)
+        end
+    end)
 end
 
 -------------------------------------------------
@@ -421,7 +483,7 @@ end
 
 local function CreateLibGetFramePane()
     local miscPane = Cell.CreateTitledPane(generalTab, "LibGetFrame", 422, 80)
-    miscPane:SetPoint("TOPLEFT", generalTab, 5, -450)
+    miscPane:SetPoint("TOPLEFT", generalTab, 5, -460)
 
     framePriorityWidget = CreateFramePriorityWidget(miscPane)
     framePriorityWidget:SetPoint("TOPLEFT", 5, -45)
@@ -524,6 +586,10 @@ local function ShowTab(tab)
         framePriorityWidget:Load(CellDB["general"]["framePriority"])
         useCleuCB:SetChecked(CellDB["general"]["useCleuHealthUpdater"])
         translitCB:SetChecked(CellDB["general"]["translit"])
+        
+        if UpdateCustomRangeSpellBtn then
+            UpdateCustomRangeSpellBtn()
+        end
 
     else
         generalTab:Hide()
