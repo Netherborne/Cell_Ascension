@@ -127,16 +127,19 @@ if Cell.isRetail then
     --! make needButtons == 20
     header:SetAttribute("startingIndex", -19)
 else
-    header:SetAttribute("maxColumns", 5)
-    --! make needButtons == 25
-    header:SetAttribute("startingIndex", -24)
+    header:SetAttribute("maxColumns", 8)
+    --! make needButtons == 40
+    header:SetAttribute("startingIndex", -39)
 end
 header:Show()
 header:SetAttribute("startingIndex", 1)
 
-for i, b in ipairs(header) do
-    Cell.unitButtons.pet[i] = b
-    -- b.type = "pet" -- layout setup
+for i = 1, 40 do
+    local b = _G["CellPetFrameHeaderUnitButton"..i]
+    if b then
+        Cell.unitButtons.pet[i] = b
+        -- b.type = "pet" -- layout setup
+    end
 end
 
 -- update mover
@@ -248,18 +251,21 @@ local function PetFrame_UpdateLayout(layout, which)
         -- header:SetAttribute("buttonWidth", P.Scale(width))
         -- header:SetAttribute("buttonHeight", P.Scale(height))
 
-        for i, b in ipairs(header) do
-            if not which or strfind(which, "size$") then
-                P.Size(b, width, height)
-            end
+        for i = 1, 40 do
+            local b = _G["CellPetFrameHeaderUnitButton"..i]
+            if b then
+                if not which or strfind(which, "size$") then
+                    P.Size(b, width, height)
+                end
 
-            -- NOTE: SetOrientation BEFORE SetPowerSize
-            if not which or which == "barOrientation" then
-                B.SetOrientation(b, layout["barOrientation"][1], layout["barOrientation"][2])
-            end
+                -- NOTE: SetOrientation BEFORE SetPowerSize
+                if not which or which == "barOrientation" then
+                    B.SetOrientation(b, layout["barOrientation"][1], layout["barOrientation"][2])
+                end
 
-            if not which or strfind(which, "power$") or which == "barOrientation" or which == "powerFilter" then
-                B.SetPowerSize(b, powerSize)
+                if not which or strfind(which, "power$") or which == "barOrientation" or which == "powerFilter" then
+                    B.SetPowerSize(b, powerSize)
+                end
             end
         end
     end
@@ -333,8 +339,11 @@ local function PetFrame_UpdateLayout(layout, which)
         header:SetAttribute("columnAnchorPoint", headerColumnAnchorPoint)
 
         --! force update unitbutton's point
-        for i, b in ipairs(header) do
-            b:ClearAllPoints()
+        for i = 1, 40 do
+            local b = _G["CellPetFrameHeaderUnitButton"..i]
+            if b then
+                b:ClearAllPoints()
+            end
         end
         header:SetAttribute("unitsPerColumn", 5)
         header:SetAttribute("maxColumns", 8)
@@ -346,6 +355,7 @@ local function PetFrame_UpdateLayout(layout, which)
 
     if not which or which == "pet" then
         if Cell.vars.groupType == "party" and layout["pet"]["partyEnabled"] and layout["pet"]["partyDetached"] then
+            petFrame:Show()
             if Cell.vars.inBattleground == 5 then -- arena
                 header:SetAttribute("showParty", false)
                 header:SetAttribute("showRaid", true)
@@ -353,15 +363,46 @@ local function PetFrame_UpdateLayout(layout, which)
                 header:SetAttribute("showParty", true)
                 header:SetAttribute("showRaid", false)
             end
-            petFrame:Show()
         elseif Cell.vars.groupType == "raid" and layout["pet"]["raidEnabled"] and Cell.vars.inBattleground ~= 5 then
+            petFrame:Show()
             header:SetAttribute("showParty", false)
             header:SetAttribute("showRaid", true)
-            petFrame:Show()
         else
+            petFrame:Hide()
             header:SetAttribute("showParty", false)
             header:SetAttribute("showRaid", false)
-            petFrame:Hide()
+        end
+
+        if petFrame:IsShown() then
+            header:SetAttribute("startingIndex", -1)
+            header:SetAttribute("startingIndex", 1)
+        end
+
+        for i = 1, 40 do
+            local b = _G["CellPetFrameHeaderUnitButton"..i]
+            if b then
+                Cell.unitButtons.pet[i] = b
+                
+                -- Force layout properties for newly created buttons
+                if width and height then
+                    P.Size(b, width, height)
+                end
+                if layout["barOrientation"] then
+                    B.SetOrientation(b, layout["barOrientation"][1], layout["barOrientation"][2])
+                end
+                if powerSize then
+                    B.SetPowerSize(b, powerSize)
+                end
+
+                local unit = b:GetAttribute("unit")
+                if unit then
+                    RegisterUnitWatch(b)
+                end
+
+                if b._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
+                    Cell.bFuncs.UpdateAll(b)
+                end
+            end
         end
     end
 end

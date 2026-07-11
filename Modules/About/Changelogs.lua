@@ -21,20 +21,21 @@ local function CreateChangelogsFrame()
     content:SetSpacing("h1", 9)
     content:SetSpacing("h2", 7)
     content:SetSpacing("p", 5)
-    -- Use explicit font objects instead of string names for WotLK compatibility
-    content:SetFontObject("h1", _G["Cell_Ascension_FONT_CLASS_TITLE"])
-    content:SetFontObject("h2", _G["Cell_Ascension_FONT_CLASS"])
+    content:SetFontObject("h1", _G["CELL_ASCENSION_FONT_CLASS_TITLE"] or GameFontNormal)
+    content:SetFontObject("h2", _G["CELL_ASCENSION_FONT_CLASS"] or GameFontNormal)
     if LOCALE_zhCN then
-        content:SetFontObject("p", _G["Cell_Ascension_FONT_WIDGET"])
+        content:SetFontObject("p", _G["CELL_ASCENSION_FONT_WIDGET"] or GameFontNormal)
     else
-        content:SetFontObject("p", _G["Cell_Ascension_FONT_CHINESE"])
+        content:SetFontObject("p", _G["CELL_ASCENSION_FONT_CHINESE"] or GameFontNormal)
     end
     content:SetPoint("TOP", 0, -10)
     content:SetWidth(changelogsFrame:GetWidth() - 30)
     content:SetHyperlinkFormat("|H%s|h|cFFFFD100%s|r|h")
 
        changelogsFrame:SetScript("OnShow", function()
-        content:SetText("<html><body>" .. L["CHANGELOGS"] .. "</body></html>")
+        local text = L["CHANGELOGS"] or ""
+        text = string.gsub(text, "\r", "")
+        content:SetText("<html><body>" .. text .. "</body></html>")
         C_Timer.After(0, function()
             local height
             if content.GetContentHeight then
@@ -56,16 +57,13 @@ local function CreateChangelogsFrame()
 
     content:SetScript("OnHyperlinkClick", function(self, linkData, link, button)
         if linkData == "older" then
-            content:SetText("<html><body>" .. L["OLDER_CHANGELOGS"] .. "</body></html>")
+            local text = L["OLDER_CHANGELOGS"] or ""
+            text = string.gsub(text, "\r", "")
+            content:SetText("<html><body>" .. text .. "</body></html>")
         elseif linkData == "recent" then
-            content:SetText("<html><body>" .. L["CHANGELOGS"] .. "</body></html>")
-        end
-
-            content:SetScript("OnHyperlinkClick", function(self, linkData, link, button)
-        if linkData == "older" then
-            content:SetText("<html><body>" .. L["OLDER_CHANGELOGS"] .. "</body></html>")
-        elseif linkData == "recent" then
-            content:SetText("<html><body>" .. L["CHANGELOGS"] .. "</body></html>")
+            local text = L["CHANGELOGS"] or ""
+            text = string.gsub(text, "\r", "")
+            content:SetText("<html><body>" .. text .. "</body></html>")
         end
 
         C_Timer.After(0, function()
@@ -83,8 +81,6 @@ local function CreateChangelogsFrame()
             changelogsFrame.scrollFrame.content:SetHeight(height + 30)
             changelogsFrame.scrollFrame:ResetScroll()
         end)
-    end)
-
     end)
 end
 

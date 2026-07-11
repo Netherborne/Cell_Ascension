@@ -87,7 +87,19 @@ select(2, ...).L = setmetatable({
     ["BACKUP_TIPS2"] = "Note for Classic players: Backups do not include Click-Castings and Layout Auto Switch of other characters",
 
     ["CHANGELOGS"] = [[
+
+        <h1>r1.0.5-release (2026-07-11)</h1>
+        <p>* Fix pets not showing up when detached layout is toggled on.</p>
+        <br/>
+
         <h2>If there are any issues after an update, check through all code snippets first.</h2>
+        <br/>
+    ]],
+
+    ["OLDER_CHANGELOGS"] = [[
+
+        <h1>r270-beta (2026-07-11 19:42 GMT+8)</h1>
+        <p>! Fixed an issue causing Cell to fail to load in some scenarios.</p>
         <br/>
 
         <h1>r269-release (2025-11-04 10:29 GMT+8)</h1>
@@ -343,9 +355,7 @@ select(2, ...).L = setmetatable({
 
         <p><a href="older">Click to view older changelogs</a></p>
         <br/>
-    ]],
-
-    ["OLDER_CHANGELOGS"] = [[
+        
         <h1>r238-release (Aug 7, 2024, 15:25 GMT+8)</h1>
         <p>* Fixed missing indicators.</p>
         <p>* Updated deDE and zhTW.</p>

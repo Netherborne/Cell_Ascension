@@ -122,7 +122,7 @@ local desaturation = {
 }
 
 local function CreateLayoutPreview()
-    layoutPreview = Cell.CreateFrame("CellLayoutPreviewFrame", Cell.frames.mainFrame, nil, nil, true)
+    layoutPreview = Cell.CreateFrame("CellLayoutPreviewFrame", CellParent, nil, nil, true)
     layoutPreview:EnableMouse(false)
     layoutPreview:SetFrameStrata("HIGH")
     layoutPreview:SetToplevel(true)
@@ -482,7 +482,7 @@ end
 -------------------------------------------------
 local npcPreview, npcPreviewAnchor, npcPreviewName
 local function CreateNPCPreview()
-    npcPreview = Cell.CreateFrame("CellNPCPreviewFrame", Cell.frames.mainFrame, nil, nil, true)
+    npcPreview = Cell.CreateFrame("CellNPCPreviewFrame", CellParent, nil, nil, true)
     npcPreview:EnableMouse(false)
     npcPreview:SetFrameStrata("HIGH")
     npcPreview:SetToplevel(true)
@@ -730,7 +730,7 @@ end
 local petPreview, petPreviewAnchor, petPreviewName
 local petNums = Cell.isRetail and 20 or 25
 local function CreatePetPreview()
-    petPreview = Cell.CreateFrame("CellPetPreviewFrame", Cell.frames.mainFrame, nil, nil, true)
+    petPreview = Cell.CreateFrame("CellPetPreviewFrame", CellParent, nil, nil, true)
     petPreview:EnableMouse(false)
     petPreview:SetFrameStrata("HIGH")
     petPreview:SetToplevel(true)
@@ -1010,7 +1010,7 @@ end
 -------------------------------------------------
 local spotlightPreview, spotlightPreviewAnchor, spotlightPreviewName
 local function CreateSpotlightPreview()
-    spotlightPreview = Cell.CreateFrame("CellSpotlightPreviewFrame", Cell.frames.mainFrame, nil, nil, true)
+    spotlightPreview = Cell.CreateFrame("CellSpotlightPreviewFrame", CellParent, nil, nil, true)
     spotlightPreview:EnableMouse(false)
     spotlightPreview:SetFrameStrata("HIGH")
     spotlightPreview:SetToplevel(true)
