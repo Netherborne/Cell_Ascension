@@ -110,6 +110,13 @@ function F.UpdateLayout(layoutGroupType)
             b._indicatorsReady = nil
         end, true)
 
+        -- Rebuild the secure state driver conditional so that "hide" layout
+        -- settings are pre-baked before the player enters combat. This must run
+        -- out of combat (we're already inside the else branch of InCombatLockdown).
+        if F.RebuildGroupStateDriver then
+            F.RebuildGroupStateDriver()
+        end
+
         Cell.Fire("UpdateLayout", layout)
         Cell.Fire("UpdateIndicators")
     end

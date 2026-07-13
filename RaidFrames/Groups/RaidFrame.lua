@@ -373,14 +373,11 @@ end
 -- end
 
 local function RaidFrame_UpdateLayout(layout, which)
-    -- visibility
+    -- NOTE: Frame visibility (show/hide) is managed entirely by CellGroupStateDriver
+    -- in CombatSafeVisibility.lua via RegisterStateDriver. We must NOT call Show()/Hide()
+    -- on raidFrame here — that would conflict with the secure driver and taint in combat.
     if Cell.vars.groupType ~= "raid" or Cell.vars.isHidden then
-        UnregisterAttributeDriver(raidFrame, "state-visibility")
-        raidFrame:Hide()
         return
-    else
-        RegisterAttributeDriver(raidFrame, "state-visibility", "show")
-        raidFrame:Show()  --! WotLK 3.3.5a: Must explicitly call Show()
     end
 
     --! WotLK 3.3.5a: Safety check for layout
@@ -696,63 +693,6 @@ local function RaidFrame_UpdateLayout(layout, which)
     -- F.Debug("|cffff00ff=== RaidFrame_UpdateLayout END ===")
 end
 Cell.RegisterCallback("UpdateLayout", "RaidFrame_UpdateLayout", RaidFrame_UpdateLayout)
-
--- local function RaidFrame_UpdateVisibility(which)
---     if not which or which == "raid" then
---         UpdateHeadersShowRaidAttribute()
-
---         if CellDB["general"]["showRaid"] then
---             RegisterAttributeDriver(raidFrame, "state-visibility", "show")
---         else
---             UnregisterAttributeDriver(raidFrame, "state-visibility")
---             raidFrame:Hide()
---         end
---     end
--- end
--- Cell.RegisterCallback("UpdateVisibility", "RaidFrame_UpdateVisibility", RaidFrame_UpdateVisibility)
-
--- WotLK Fix: Force update raid buttons when entering raid group type
--- The RegisterAttributeDriver visibility state doesn't always sync properly after leaving BG/raid
-local function RaidFrame_GroupTypeChanged(groupType)
-    if groupType == "raid" then
-        -- Force update after a delay to ensure frame is visible
-        C_Timer.After(1, function()
-            if Cell.vars.groupType == "raid" then
-                -- Force show the frame if not visible
-                if not raidFrame:IsVisible() then
-                    raidFrame:Show()
-                end
-                -- Force update all raid buttons
-                for i = 1, 8 do
-                    local header = separatedHeaders[i]
-                    if header then
-                        for j = 1, 5 do
-                            local button = header[j]
-                            if button and button:IsVisible() then
-                                button._updateRequired = 1
-                                button._powerUpdateRequired = 1
-                                if button._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
-                                    Cell.bFuncs.UpdateAll(button)
-                                end
-                            end
-                        end
-                    end
-                end
-                -- Also update combined header buttons
-                if combinedHeader then
-                    for i = 1, 40 do
-                        local button = combinedHeader[i]
-                        if button and button:IsVisible() then
-                            button._updateRequired = 1
-                            button._powerUpdateRequired = 1
-                            if button._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
-                                Cell.bFuncs.UpdateAll(button)
-                            end
-                        end
-                    end
-                end
-            end
-        end)
-    end
-end
-Cell.RegisterCallback("GroupTypeChanged", "RaidFrame_GroupTypeChanged", RaidFrame_GroupTypeChanged)
+-- NOTE: RaidFrame_GroupTypeChanged (timer-based force-show hack) removed.
+-- Frame visibility is now handled combat-safely by CellGroupStateDriver
+-- in CombatSafeVisibility.lua. No GroupTypeChanged callback needed here.

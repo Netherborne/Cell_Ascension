@@ -244,15 +244,11 @@ C_Timer.After(0.5, function()
 end)
 
 local function PartyFrame_UpdateLayout(layout, which)
-    -- visibility
+    -- NOTE: Frame visibility (show/hide) is managed entirely by CellGroupStateDriver
+    -- in CombatSafeVisibility.lua via RegisterStateDriver. We must NOT call Show()/Hide()
+    -- on partyFrame here — that would conflict with the secure driver and taint in combat.
     if Cell.vars.groupType ~= "party" or Cell.vars.isHidden then
-        UnregisterAttributeDriver(partyFrame, "state-visibility")
-        partyFrame:Hide()
         return
-    else
-        --! WotLK 3.3.5a: Simplified visibility driver - just show when groupType is party
-        RegisterAttributeDriver(partyFrame, "state-visibility", "show")
-        partyFrame:Show()  --! WotLK 3.3.5a: Must explicitly call Show()
     end
 
     --! WotLK 3.3.5a: Safety check for layout
@@ -459,14 +455,14 @@ local function PartyFrame_UpdateLayout(layout, which)
     end
 
     if not which or which == "hideSelf" then
-        --! WotLK 3.3.5a: Don't use showPlayer attribute - it triggers auto button creation
-        --! Instead, manually show/hide the first button (player button)
+        --! Use RegisterAttributeDriver instead of Show()/Hide() so this works
+        --! safely during combat lockdown on the protected manualButtons[1] frame.
         if layout["main"]["hideSelf"] then
             UnregisterUnitWatch(manualButtons[1])
-            manualButtons[1]:Hide()
+            RegisterAttributeDriver(manualButtons[1], "state-visibility", "hide")
         else
+            UnregisterAttributeDriver(manualButtons[1], "state-visibility")
             RegisterUnitWatch(manualButtons[1])
-            manualButtons[1]:Show()
         end
     end
 
@@ -483,74 +479,9 @@ local function PartyFrame_UpdateLayout(layout, which)
     -- F.Debug("|cffff8800=== PartyFrame_UpdateLayout END ===")
 end
 Cell.RegisterCallback("UpdateLayout", "PartyFrame_UpdateLayout", PartyFrame_UpdateLayout)
-
--- local function PartyFrame_UpdateVisibility(which)
---     if not which or which == "party" then
---         header:SetAttribute("showParty", CellDB["general"]["showParty"])
---         if CellDB["general"]["showParty"] then
---             --! [group] won't fire during combat
---             -- RegisterAttributeDriver(partyFrame, "state-visibility", "[group:raid] hide; [group:party] show; hide")
---             -- NOTE: [group:party] show: fix for premade, only player in party, but party1 not exists
---             RegisterAttributeDriver(partyFrame, "state-visibility", "[@raid1,exists] hide;[@party1,exists] show;[group:party] show;hide")
---         else
---             UnregisterAttributeDriver(partyFrame, "state-visibility")
---             partyFrame:Hide()
---         end
---     end
--- end
--- Cell.RegisterCallback("UpdateVisibility", "PartyFrame_UpdateVisibility", PartyFrame_UpdateVisibility)
-
--- local f = CreateFrame("Frame", nil, CellParent, "SecureFrameTemplate")
--- RegisterAttributeDriver(f, "state-group", "[@raid1,exists] raid;[@party1,exists] party; solo")
--- SecureHandlerWrapScript(f, "OnAttributeChanged", f, [[
---     print(name, value)
---     if name ~= "state-group" then return end
--- ]])
-
--- RegisterStateDriver(f, "groupstate", "[group:raid] raid; [group:party] party; solo")
--- f:SetAttribute("_onstate-groupstate", [[
---     print(stateid, newstate)
--- ]])
-
--- WotLK Fix: Force update party buttons when entering party group type
--- The RegisterAttributeDriver visibility state doesn't always sync properly after leaving BG/raid
-local function PartyFrame_GroupTypeChanged(groupType)
-    if groupType == "party" then
-        -- Force update after a delay to ensure frame is visible
-        C_Timer.After(0.5, function()
-            if Cell.vars.groupType == "party" then
-                -- Force show the frame if not visible
-                if not partyFrame:IsVisible() then
-                    partyFrame:Show()
-                end
-                -- Force update all party buttons
-                for i = 1, 5 do
-                    local button = manualButtons[i]
-                    if button then
-                        if button:IsVisible() then
-                            button._updateRequired = 1
-                            button._powerUpdateRequired = 1
-                            if button._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
-                                Cell.bFuncs.UpdateAll(button)
-                            end
-                        end
-                        -- Also update pet button
-                        if button.petButton and button.petButton:IsVisible() then
-                            button.petButton._updateRequired = 1
-                            button.petButton._powerUpdateRequired = 1
-                            if button.petButton._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
-                                Cell.bFuncs.UpdateAll(button.petButton)
-                            end
-                        end
-                    end
-                end
-                -- Ensure unit attributes are synced and buttons refresh even if they never received OnAttributeChanged
-                ForceSyncPartyButtons()
-            end
-        end)
-    end
-end
-Cell.RegisterCallback("GroupTypeChanged", "PartyFrame_GroupTypeChanged", PartyFrame_GroupTypeChanged)
+-- NOTE: PartyFrame_GroupTypeChanged (timer-based force-show hack) removed.
+-- Frame visibility is now handled combat-safely by CellGroupStateDriver
+-- in CombatSafeVisibility.lua. No GroupTypeChanged callback needed here.
 
 local partyRosterRefreshFrame = CreateFrame("Frame")
 partyRosterRefreshFrame:SetScript("OnEvent", function(_, event)

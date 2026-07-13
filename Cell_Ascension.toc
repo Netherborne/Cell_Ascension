@@ -54,5 +54,6 @@ RaidFrames\Groups\RaidFrame.lua
 RaidFrames\Groups\PetFrame.lua
 RaidFrames\Groups\NPCFrame.lua
 RaidFrames\Groups\SpotlightFrame.lua
+RaidFrames\CombatSafeVisibility.lua
 
 Supporters.lua

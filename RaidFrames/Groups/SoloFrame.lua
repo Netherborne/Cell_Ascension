@@ -20,20 +20,11 @@ petButton:SetAttribute("unit", "pet")
 Cell.unitButtons.solo["pet"] = petButton
 
 local function SoloFrame_UpdateLayout(layout, which)
-    -- visibility
+    -- NOTE: Frame visibility (show/hide) is managed entirely by CellGroupStateDriver
+    -- in CombatSafeVisibility.lua via RegisterStateDriver. We must NOT call Show()/Hide()
+    -- here — that would conflict with the secure driver and could taint in combat.
     if Cell.vars.groupType ~= "solo" or Cell.vars.isHidden then
-        if InCombatLockdown() then
-            RegisterAttributeDriver(soloFrame, "state-visibility", "hide")
-        else
-            UnregisterAttributeDriver(soloFrame, "state-visibility")
-            soloFrame:Hide()
-        end
         return
-    else
-        RegisterAttributeDriver(soloFrame, "state-visibility", "show")
-        if not InCombatLockdown() then
-            soloFrame:Show()
-        end
     end
 
     -- update
@@ -119,63 +110,6 @@ local function SoloFrame_UpdateLayout(layout, which)
     end
 end
 Cell.RegisterCallback("UpdateLayout", "SoloFrame_UpdateLayout", SoloFrame_UpdateLayout)
-
--- WotLK Fix: Force update solo buttons when returning to solo group type
--- The RegisterAttributeDriver visibility state doesn't always sync properly after leaving BG/raid
-local function SoloFrame_GroupTypeChanged(groupType)
-    if groupType == "solo" then
-        -- Force update after a delay to ensure frame is visible
-        C_Timer.After(0.5, function()
-            if Cell.vars.groupType == "solo" then
-                -- Force update player button
-                if playerButton then
-                    if playerButton:IsVisible() then
-                        playerButton._updateRequired = 1
-                        playerButton._powerUpdateRequired = 1
-                        if playerButton._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
-                            Cell.bFuncs.UpdateAll(playerButton)
-                        end
-                    else
-                        -- Button not visible - the attribute driver may not have updated
-                        -- Force show the frame and retry
-                        if not InCombatLockdown() then
-                            soloFrame:Show()
-                        end
-                        C_Timer.After(0.2, function()
-                            if playerButton:IsVisible() then
-                                playerButton._updateRequired = 1
-                                playerButton._powerUpdateRequired = 1
-                                if playerButton._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
-                                    Cell.bFuncs.UpdateAll(playerButton)
-                                end
-                            end
-                        end)
-                    end
-                end
-                -- Force update pet button
-                if petButton and petButton:IsVisible() then
-                    petButton._updateRequired = 1
-                    petButton._powerUpdateRequired = 1
-                    if petButton._indicatorsReady and Cell.bFuncs and Cell.bFuncs.UpdateAll then
-                        Cell.bFuncs.UpdateAll(petButton)
-                    end
-                end
-            end
-        end)
-    end
-end
-Cell.RegisterCallback("GroupTypeChanged", "SoloFrame_GroupTypeChanged", SoloFrame_GroupTypeChanged)
-
--- local function SoloFrame_UpdateVisibility(which)
---     F.Debug("|cffff7fffUpdateVisibility:|r "..(which or "all"))
-
---     if not which or which == "solo" then
---         if CellDB["general"]["showSolo"] then
---             RegisterAttributeDriver(soloFrame, "state-visibility", "[@raid1,exists] hide;[@party1,exists] hide;[group] hide;show")
---         else
---             UnregisterAttributeDriver(soloFrame, "state-visibility")
---             soloFrame:Hide()
---         end
---     end
--- end
--- Cell.RegisterCallback("UpdateVisibility", "SoloFrame_UpdateVisibility", SoloFrame_UpdateVisibility)
+-- NOTE: SoloFrame_GroupTypeChanged (timer-based force-show hack) removed.
+-- Frame visibility is now handled combat-safely by CellGroupStateDriver
+-- in CombatSafeVisibility.lua. No GroupTypeChanged callback needed here.
