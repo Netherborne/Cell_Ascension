@@ -275,7 +275,12 @@ local function PartyFrame_UpdateLayout(layout, which)
                 local unit = manualButtons[i]:GetAttribute("unit")
                 if unit then
                     -- Re-register unit watch to ensure button visibility
-                    RegisterUnitWatch(manualButtons[i])
+                    if i == 1 and layout["main"]["hideSelf"] then
+                        UnregisterUnitWatch(manualButtons[i])
+                        manualButtons[i]:Hide()
+                    else
+                        RegisterUnitWatch(manualButtons[i])
+                    end
                     -- Update button unit registration
                     if header.UpdateButtonUnit then
                         header:UpdateButtonUnit(manualButtons[i]:GetName(), unit)
@@ -457,8 +462,10 @@ local function PartyFrame_UpdateLayout(layout, which)
         --! WotLK 3.3.5a: Don't use showPlayer attribute - it triggers auto button creation
         --! Instead, manually show/hide the first button (player button)
         if layout["main"]["hideSelf"] then
+            UnregisterUnitWatch(manualButtons[1])
             manualButtons[1]:Hide()
         else
+            RegisterUnitWatch(manualButtons[1])
             manualButtons[1]:Show()
         end
     end
