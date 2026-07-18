@@ -725,13 +725,18 @@ function F.UpdateClickCastOnFrame(frame, snippet)
                 local modifier = self._menuClickModifier or ""
                 self._menuClickModifier = nil
 
+                -- menu binds never execute natively on 3.3.5 ("togglemenu" is not a secure
+                -- action here), so they must be resolved BEFORE the unmodified-mouse guard
+                -- below — otherwise the default plain right-click menu bind can never fire
+                local bindKey = GetPostClickBindKey(button, modifier)
+                local isMenuAction = IsBoundMenuAction(self, bindKey)
+
                 local modifiedMouse = modifier ~= ""
-                if not modifiedMouse and (button == "LeftButton" or button == "RightButton" or button == "MiddleButton" or strmatch(button, "^Button%d+$")) then
+                if not isMenuAction and not modifiedMouse and (button == "LeftButton" or button == "RightButton" or button == "MiddleButton" or strmatch(button, "^Button%d+$")) then
                     return
                 end
 
-                local bindKey = GetPostClickBindKey(button, modifier)
-                if IsBoundMenuAction(self, bindKey) then
+                if isMenuAction then
                     ShowUnitMenu(self)
                 end
             end)
