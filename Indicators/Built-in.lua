@@ -2395,6 +2395,92 @@ function I.CreateCombatIcon(parent)
     return combatIcon
 end
 
+--------------------------------------------------
+-- Direction Arrow (VuhDo-style, atlas 108 cells)
+--------------------------------------------------
+local DA_2PI = math.pi * 2
+local DA_atan2 = math.atan2
+local DA_lastZoneCheck = 0
+
+local function DirectionArrow_SetCell(self, cell)
+    if cell == self._cell then return end
+    self._cell = cell
+    local x = (cell % 9) * 0.109375
+    local y = floor(cell / 9) * 0.08203125
+    self.tex:SetTexCoord(x, x + 0.109375, y, y + 0.08203125)
+end
+
+local function DirectionArrow_GetDirection(unit)
+    -- don't touch the map while the player is browsing it
+    if WorldMapFrame and WorldMapFrame:IsShown() then return end
+
+    local px, py = GetPlayerMapPosition("player")
+    if (px or 0) + (py or 0) <= 0 then
+        -- throttle resetting to current map to avoid conflicts with other addons
+        if DA_lastZoneCheck + 2 < GetTime() then
+            DA_lastZoneCheck = GetTime()
+            SetMapToCurrentZone()
+            px, py = GetPlayerMapPosition("player")
+        end
+        if (px or 0) + (py or 0) <= 0 then return end
+    end
+
+    local ux, uy = GetPlayerMapPosition(unit)
+    if (ux or 0) + (uy or 0) <= 0 then return end
+
+    local facing = GetPlayerFacing()
+    if not facing then return end
+
+    return math.pi - DA_atan2(px - ux, uy - py) - facing
+end
+
+local function DirectionArrow_OnUpdate(self, elapsed)
+    self._elapsed = (self._elapsed or 0) + elapsed
+    if self._elapsed < 0.05 then return end
+    self._elapsed = 0
+
+    -- options preview: continuous rotation demo
+    if self.root.isPreview then
+        DirectionArrow_SetCell(self, ((self._cell or 0) + 1) % 108)
+        return
+    end
+
+    local unit = self.root.states.displayedUnit
+    if not unit then
+        self:Hide()
+        return
+    end
+
+    local direction = DirectionArrow_GetDirection(unit)
+    if direction then
+        DirectionArrow_SetCell(self, floor(direction / DA_2PI * 108 + 0.5) % 108)
+        self.tex:Show()
+    else
+        self.tex:Hide() -- no map data yet, keep trying
+    end
+end
+
+function I.CreateDirectionArrow(parent)
+    local directionArrow = CreateFrame("Frame", parent:GetName().."DirectionArrow", parent.widgets.indicatorFrame)
+    parent.indicators.directionArrow = directionArrow
+    directionArrow.root = parent
+    directionArrow:Hide()
+
+    directionArrow.tex = directionArrow:CreateTexture(nil, "ARTWORK")
+    directionArrow.tex:SetAllPoints()
+    directionArrow.tex:SetTexture("Interface\\AddOns\\Cell_Ascension\\Media\\Arrow", nil, nil, "TRILINEAR")
+    directionArrow.tex:SetVertexColor(1, 0.2, 0.1, 1) -- default red, overridden by layout ["color"]
+    DirectionArrow_SetCell(directionArrow, 0)
+
+    function directionArrow:SetColor(r, g, b, a)
+        self.tex:SetVertexColor(r, g, b, a or 1)
+    end
+
+    directionArrow:SetScript("OnUpdate", DirectionArrow_OnUpdate)
+
+    return directionArrow
+end
+
 -------------------------------------------------
 -- missing buffs
 -------------------------------------------------
