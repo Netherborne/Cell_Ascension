@@ -512,71 +512,130 @@ end
 
 
 
--- C_Timer - completely replace with working implementation for WotLK 3.3.5
--- WotLK has a broken C_Timer that causes errors in C_TimerAugment.lua
--- We completely replace it to avoid those errors
+-- C_Timer - per-key fills for WotLK 3.3.5 / Ascension
+-- 335-patch: REWORK. The old block wholesale-replaced C_Timer (clobbering Ascension's
+-- native, working C_Timer.After), allocated one CreateFrame PER timer call (never pooled,
+-- never GC'd -> unbounded frame growth), silently pcall-swallowed callback errors, and
+-- parsed-but-DROPPED NewTicker's iterations arg (finite tickers became immortal; live
+-- victims: Details LibOpenRaid, DF schedules). New shape: respect native C_Timer with
+-- per-key fills only; ONE shared driver frame for all NewTimer/NewTicker timers; ticker
+-- iterations honored (nil = infinite, after N fires auto-cancel); callback errors reported
+-- via geterrorhandler() and never abort other timers; driver hides itself when idle.
 do
-    local Ticker = {}
-    Ticker.__index = Ticker
+    C_Timer = C_Timer or {} -- 335-patch: keep the native table; fill only what's missing
 
-    function Ticker:Cancel()
+    local TimerMixin = {}
+    TimerMixin.__index = TimerMixin
+
+    function TimerMixin:Cancel()
         self._cancelled = true
     end
 
-    function Ticker:IsCancelled()
-        return self._cancelled
+    function TimerMixin:IsCancelled()
+        return self._cancelled and true or false
     end
 
-    local function CreateTimer(duration, callback, isTicker)
-        -- Validate arguments - use defaults instead of erroring
-        if type(duration) ~= "number" then
-            duration = 0.01 -- fallback to minimal duration
-        end
-        if type(callback) ~= "function" then
-            callback = function() end -- no-op callback
-        end
+    local activeTimers = {} -- array of live timer objects, all driven by ONE frame
+    local driver            -- lazily created shared driver frame
 
-        local timer = setmetatable({}, Ticker)
-        local total = 0
-        local frame = CreateFrame("Frame")
-        frame:SetScript("OnUpdate", function(self, elapsed)
-            if timer:IsCancelled() then
-                self:SetScript("OnUpdate", nil)
-                return
-            end
-            total = total + elapsed
-            if total >= duration then
-                if isTicker then
-                    total = 0
-                    pcall(callback, timer) -- Protect callback execution
-                else
-                    self:SetScript("OnUpdate", nil)
-                    pcall(callback) -- Protect callback execution
+    local function ReportError(err)
+        local eh = geterrorhandler and geterrorhandler()
+        if eh then pcall(eh, err) end
+    end
+
+    local function DriverOnUpdate(self, elapsed)
+        -- iterate downward so table.remove is safe; timers added during a callback
+        -- land above the captured range and first tick on the NEXT frame
+        for i = #activeTimers, 1, -1 do
+            local timer = activeTimers[i]
+            if timer._cancelled then
+                table.remove(activeTimers, i)
+            else
+                timer._remaining = timer._remaining - elapsed
+                if timer._remaining <= 0 then
+                    local ok, err
+                    if timer._passSelf then
+                        ok, err = pcall(timer._callback, timer)
+                    else
+                        ok, err = pcall(timer._callback)
+                    end
+                    if not ok then
+                        ReportError(err) -- report, never silent-swallow; other timers unaffected
+                    end
+                    if timer._ticker and not timer._cancelled then
+                        timer._remaining = timer._remaining + timer._duration
+                        if timer._remaining <= 0 then
+                            timer._remaining = timer._duration -- no catch-up bursts after long stalls
+                        end
+                        if timer._iterations then
+                            timer._iterations = timer._iterations - 1
+                            if timer._iterations <= 0 then
+                                timer._cancelled = true -- finite ticker done: auto-cancel
+                                table.remove(activeTimers, i)
+                            end
+                        end
+                    else
+                        timer._cancelled = true
+                        table.remove(activeTimers, i)
+                    end
                 end
             end
-        end)
+        end
+        if #activeTimers == 0 then
+            self:Hide() -- idle: stop OnUpdate until the next timer is added
+        end
+    end
+
+    local function AddTimer(duration, callback, isTicker, iterations, passSelf)
+        -- Validate arguments - use defaults instead of erroring (old block's behavior, kept)
+        if type(duration) ~= "number" then
+            duration = 0.01
+        end
+        if type(callback) ~= "function" then
+            callback = function() end
+        end
+        local timer = setmetatable({
+            _duration  = duration,
+            _remaining = duration,
+            _callback  = callback,
+            _ticker    = isTicker or nil,
+            _passSelf  = passSelf or nil,
+        }, TimerMixin)
+        if isTicker and type(iterations) == "number" then
+            if iterations <= 0 then
+                timer._cancelled = true -- zero/negative iterations: never fires
+                return timer            -- don't enqueue or wake the driver for a dead ticker
+            else
+                timer._iterations = math.floor(iterations)
+            end
+        end
+        if not driver then
+            driver = CreateFrame("Frame")
+            driver:Hide()
+            driver:SetScript("OnUpdate", DriverOnUpdate)
+        end
+        activeTimers[#activeTimers + 1] = timer
+        driver:Show()
         return timer
     end
 
-    -- Completely replace C_Timer (don't try to preserve native version)
-    C_Timer = {
-        After = function(durationOrSelf, callbackOrDuration, maybeCallback)
+    if not C_Timer.After then -- 335-patch: Ascension provides a native After; this fill is a fallback only
+        C_Timer.After = function(durationOrSelf, callbackOrDuration, maybeCallback)
             -- Handle both C_Timer.After(duration, callback) and C_Timer:After(duration, callback)
             local duration, callback
             if type(durationOrSelf) == "table" and durationOrSelf == C_Timer then
-                -- Called with colon syntax: C_Timer:After(duration, callback)
                 duration = callbackOrDuration
                 callback = maybeCallback
             else
-                -- Called with dot syntax: C_Timer.After(duration, callback)
                 duration = durationOrSelf
                 callback = callbackOrDuration
             end
-            CreateTimer(duration, callback, false)
-        end,
+            AddTimer(duration, callback, false, nil, false)
+        end
+    end
 
-        NewTimer = function(durationOrSelf, callbackOrDuration, maybeCallback)
-            -- Handle both calling conventions
+    if not C_Timer.NewTimer then
+        C_Timer.NewTimer = function(durationOrSelf, callbackOrDuration, maybeCallback)
             local duration, callback
             if type(durationOrSelf) == "table" and durationOrSelf == C_Timer then
                 duration = callbackOrDuration
@@ -585,11 +644,12 @@ do
                 duration = durationOrSelf
                 callback = callbackOrDuration
             end
-            return CreateTimer(duration, callback, false)
-        end,
+            return AddTimer(duration, callback, false, nil, true)
+        end
+    end
 
-        NewTicker = function(durationOrSelf, callbackOrDuration, iterationsOrCallback, maybeIterations)
-            -- Handle both calling conventions
+    if not C_Timer.NewTicker then
+        C_Timer.NewTicker = function(durationOrSelf, callbackOrDuration, iterationsOrCallback, maybeIterations)
             local duration, callback, iterations
             if type(durationOrSelf) == "table" and durationOrSelf == C_Timer then
                 duration = callbackOrDuration
@@ -600,9 +660,9 @@ do
                 callback = callbackOrDuration
                 iterations = iterationsOrCallback
             end
-            return CreateTimer(duration, callback, true)
+            return AddTimer(duration, callback, true, iterations, true)
         end
-    }
+    end
 end
 
 -- C_Spell
@@ -909,13 +969,65 @@ if not C_AddOns.GetAddOnDependencies then
     end
 end
 
+-- 335-patch: GetAddOnEnableState - accept BOTH call shapes and return Enum.AddOnEnableState.
+-- Retail order is (name, character) / (index, character); the legacy global (and the old
+-- polyfill here) used (character, addonName). Other addons sharing this global C_AddOns
+-- (e.g. Chattynator Skins/Main.lua) call with retail order, which the old polyfill fed to
+-- the native legacy-order global backwards. Detect which arg is the addon, then resolve.
+Enum = Enum or {}
+if not Enum.AddOnEnableState then
+    Enum.AddOnEnableState = { None = 0, Some = 1, All = 2 }
+elseif Enum.AddOnEnableState.None == nil then -- per-key fill if a partial enum exists
+    Enum.AddOnEnableState.None = 0
+    Enum.AddOnEnableState.Some = Enum.AddOnEnableState.Some or 1
+    Enum.AddOnEnableState.All = Enum.AddOnEnableState.All or 2
+end
 if not C_AddOns.GetAddOnEnableState then
-    function C_AddOns.GetAddOnEnableState(character, addonName)
-        if GetAddOnEnableState then
-            return GetAddOnEnableState(character, addonName)
+    local function LooksLikeAddOn(v)
+        if type(v) == "number" then return true end -- addon index is always the addon arg
+        if type(v) ~= "string" or v == "" then return false end
+        if GetAddOnInfo then
+            local ok, name = pcall(GetAddOnInfo, v)
+            return ok and name ~= nil
         end
-        local enabled = C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(addonName)
-        return enabled and 1 or 0
+        return true -- cannot verify without GetAddOnInfo; assume a non-empty string is a name
+    end
+    function C_AddOns.GetAddOnEnableState(a, b)
+        -- shape detection: retail (name/index, character) vs legacy (character, addonName)
+        local addon, character
+        if type(a) == "number" then
+            addon, character = a, b -- index first is always retail order
+        elseif a == nil then
+            addon, character = b, nil -- legacy (nil character, addonName)
+        elseif b == nil then
+            addon, character = a, nil -- single arg: the addon
+        else
+            local aIsAddon = LooksLikeAddOn(a)
+            local bIsAddon = LooksLikeAddOn(b)
+            if aIsAddon and not bIsAddon then
+                addon, character = a, b -- retail order
+            elseif bIsAddon and not aIsAddon then
+                addon, character = b, a -- legacy order
+            else
+                addon, character = a, b -- ambiguous: assume retail order (modern callers)
+            end
+        end
+        -- native legacy-order global, if this client has one
+        if GetAddOnEnableState then
+            local ok, state = pcall(GetAddOnEnableState, character, addon)
+            if ok and type(state) == "number" then
+                return state
+            end
+        end
+        -- 3.3.5 fallback: GetAddOnInfo's 4th return is the enabled flag
+        if GetAddOnInfo then
+            local ok, name, _, _, enabled = pcall(GetAddOnInfo, addon)
+            if ok and name ~= nil then
+                return enabled and Enum.AddOnEnableState.All or Enum.AddOnEnableState.None
+            end
+        end
+        local loaded = C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded(addon)
+        return loaded and Enum.AddOnEnableState.All or Enum.AddOnEnableState.None
     end
 end
 
