@@ -1,5 +1,5 @@
 --[[ $Id: CallbackHandler-1.0.lua 26 2022-12-12 15:09:39Z nevcairiel $ ]]
-local MAJOR, MINOR = "CallbackHandler-1.0", 8
+local MAJOR, MINOR = "CallbackHandler-1.0", 9 -- 335-patch: r8 + per-handler error isolation (pcall + geterrorhandler); minor bumped so patched copy wins the LibStub registry regardless of load order
 local CallbackHandler = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not CallbackHandler then return end -- No upgrade needed
@@ -16,7 +16,11 @@ local function Dispatch(handlers, ...)
 	local index, method = next(handlers)
 	if not method then return end
 	repeat
-		securecallfunction(method, ...)
+		-- 335-patch: per-handler error isolation — a throwing handler must not abort
+		-- the remaining handlers nor propagate into Fire (which would skip the
+		-- recurse restore + insertQueue flush and permanently wedge the registry)
+		local ok, err = pcall(method, ...)
+		if not ok then local eh = geterrorhandler and geterrorhandler(); if eh then pcall(eh, err) end end
 		index, method = next(handlers, index)
 	until not method
 end
