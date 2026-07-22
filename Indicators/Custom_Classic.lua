@@ -64,35 +64,88 @@ function I.UpdateIndicatorTable(indicatorTable)
     end
 end
 
+-------------------------------------------------
+-- indicator recycling pool
+-------------------------------------------------
+-- Stash an indicator frame into the per-button pool for later reuse.
+-- WoW frames/textures created via CreateFrame/CreateTexture can never be
+-- garbage-collected, so nil-ing the Lua reference only orphans the C-side
+-- object. This pool keeps them alive and hidden for recycling.
+local function StashIndicator(parent, indicator)
+    if not parent._indicatorPool then
+        parent._indicatorPool = {}
+    end
+    -- Stop any active glows before stashing so LibCustomGlow releases its textures
+    if indicator.StopGlow then
+        indicator:StopGlow()
+    end
+    indicator:ClearAllPoints()
+    indicator:Hide()
+    local iType = indicator.indicatorType or "unknown"
+    if not parent._indicatorPool[iType] then
+        parent._indicatorPool[iType] = {}
+    end
+    tinsert(parent._indicatorPool[iType], indicator)
+    F.Debug("Stashed custom indicator", indicator:GetName() or "unnamed", "of type", iType, "for", parent:GetName() or "unnamed")
+end
+
+-- Try to acquire a recycled indicator from the per-button pool.
+-- Returns the frame re-parented to the correct parent, or nil if the pool is empty.
+local function AcquireIndicator(parent, indicatorType)
+    if not parent._indicatorPool then return nil end
+    local pool = parent._indicatorPool[indicatorType]
+    if not pool or #pool == 0 then return nil end
+    local frame = tremove(pool)
+    F.Debug("Acquired recycled custom indicator", frame:GetName() or "unnamed", "of type", indicatorType, "for", parent:GetName() or "unnamed")
+    -- Re-parent to the correct container for this indicator type
+    local newParent
+    if indicatorType == "glow" or indicatorType == "border" then
+        newParent = parent.widgets.highLevelFrame
+    elseif indicatorType == "color" or indicatorType == "overlay" then
+        newParent = parent
+    else
+        newParent = parent.widgets.indicatorFrame
+    end
+    frame:SetParent(newParent)
+    return frame
+end
+
 function I.CreateIndicator(parent, indicatorTable)
     local indicatorName = indicatorTable["indicatorName"]
-    local indicator
-    if indicatorTable["type"] == "icon" then
-        indicator = I.CreateAura_BarIcon(nil, parent.widgets.indicatorFrame)
-    elseif indicatorTable["type"] == "text" then
-        indicator = I.CreateAura_Text(nil, parent.widgets.indicatorFrame)
-    elseif indicatorTable["type"] == "bar" then
-        indicator = I.CreateAura_Bar(nil, parent.widgets.indicatorFrame)
-    elseif indicatorTable["type"] == "bars" then
-        indicator = I.CreateAura_Bars(nil, parent.widgets.indicatorFrame, 10)
-    elseif indicatorTable["type"] == "rect" then
-        indicator = I.CreateAura_Rect(nil, parent.widgets.indicatorFrame)
-    elseif indicatorTable["type"] == "icons" then
-        indicator = I.CreateAura_Icons(nil, parent.widgets.indicatorFrame, 10)
-    elseif indicatorTable["type"] == "color" then
-        indicator = I.CreateAura_Color(nil, parent)
-    elseif indicatorTable["type"] == "texture" then
-        indicator = I.CreateAura_Texture(nil, parent.widgets.indicatorFrame)
-    elseif indicatorTable["type"] == "glow" then
-        indicator = I.CreateAura_Glow(nil, parent.widgets.highLevelFrame)
-    elseif indicatorTable["type"] == "overlay" then
-        indicator = I.CreateAura_Overlay(nil, parent)
-    elseif indicatorTable["type"] == "block" then
-        indicator = I.CreateAura_Block(nil, parent.widgets.indicatorFrame)
-    elseif indicatorTable["type"] == "blocks" then
-        indicator = I.CreateAura_Blocks(nil, parent.widgets.indicatorFrame, 10)
-    elseif indicatorTable["type"] == "border" then
-        indicator = I.CreateAura_Border(nil, parent.widgets.highLevelFrame)
+    local indicatorType = indicatorTable["type"]
+
+    -- Try to reuse a recycled frame of the same type first
+    local indicator = AcquireIndicator(parent, indicatorType)
+
+    if not indicator then
+        -- No recycled frame available — create a new one
+        if indicatorType == "icon" then
+            indicator = I.CreateAura_BarIcon(nil, parent.widgets.indicatorFrame)
+        elseif indicatorType == "text" then
+            indicator = I.CreateAura_Text(nil, parent.widgets.indicatorFrame)
+        elseif indicatorType == "bar" then
+            indicator = I.CreateAura_Bar(nil, parent.widgets.indicatorFrame)
+        elseif indicatorType == "bars" then
+            indicator = I.CreateAura_Bars(nil, parent.widgets.indicatorFrame, 10)
+        elseif indicatorType == "rect" then
+            indicator = I.CreateAura_Rect(nil, parent.widgets.indicatorFrame)
+        elseif indicatorType == "icons" then
+            indicator = I.CreateAura_Icons(nil, parent.widgets.indicatorFrame, 10)
+        elseif indicatorType == "color" then
+            indicator = I.CreateAura_Color(nil, parent)
+        elseif indicatorType == "texture" then
+            indicator = I.CreateAura_Texture(nil, parent.widgets.indicatorFrame)
+        elseif indicatorType == "glow" then
+            indicator = I.CreateAura_Glow(nil, parent.widgets.highLevelFrame)
+        elseif indicatorType == "overlay" then
+            indicator = I.CreateAura_Overlay(nil, parent)
+        elseif indicatorType == "block" then
+            indicator = I.CreateAura_Block(nil, parent.widgets.indicatorFrame)
+        elseif indicatorType == "blocks" then
+            indicator = I.CreateAura_Blocks(nil, parent.widgets.indicatorFrame, 10)
+        elseif indicatorType == "border" then
+            indicator = I.CreateAura_Border(nil, parent.widgets.highLevelFrame)
+        end
     end
     parent.indicators[indicatorName] = indicator
 
@@ -101,9 +154,7 @@ end
 
 function I.RemoveIndicator(parent, indicatorName, auraType)
     local indicator = parent.indicators[indicatorName]
-    indicator:ClearAllPoints()
-    indicator:Hide()
-    indicator:SetParent(nil)
+    StashIndicator(parent, indicator)
     parent.indicators[indicatorName] = nil
     enabledIndicators[indicatorName] = nil
     customIndicators[auraType][indicatorName] = nil
@@ -111,17 +162,9 @@ end
 
 -- used for switching to a new layout
 function I.RemoveAllCustomIndicators(parent)
-    -- if parent ~= CellIndicatorsPreviewButton then
-    --     wipe(enabledIndicators)
-    --     wipe(customIndicators["buff"])
-    --     wipe(customIndicators["debuff"])
-    -- end
-
     for indicatorName, indicator in pairs(parent.indicators) do
         if string.find(indicatorName, "^indicator") then
-            indicator:ClearAllPoints()
-            indicator:Hide()
-            indicator:SetParent(nil)
+            StashIndicator(parent, indicator)
             parent.indicators[indicatorName] = nil
         end
     end

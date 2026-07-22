@@ -511,6 +511,7 @@ end
 function I.CreateAura_BorderIcon(name, parent, borderSize)
     local frame = CreateFrame("Frame", name, parent, nil)
     frame:Hide()
+    frame.indicatorType = "borderIcon"
     -- frame:SetSize(11, 11)
     frame:SetBackdrop({bgFile = Cell.vars.whiteTexture})
     frame:SetBackdropColor(0, 0, 0, 0.85)
@@ -664,6 +665,7 @@ end
 function I.CreateAura_BarIcon(name, parent)
     local frame = CreateFrame("Frame", name, parent, nil)
     frame:Hide()
+    frame.indicatorType = "icon"
     -- frame:SetSize(11, 11)
     frame:SetBackdrop({bgFile = Cell.vars.whiteTexture})
     frame:SetBackdropColor(0, 0, 0, 1)
