@@ -322,6 +322,13 @@ function lib.PixelGlow_Start(r,color,N,frequency,length,th,xOffset,yOffset,borde
     if not r then
         return
     end
+
+    -- Guard: skip if frame has no size yet (prevents wasteful texture allocations)
+    local rw, rh = r:GetSize()
+    if not rw or not rh or rw <= 0 or rh <= 0 then
+        return
+    end
+
     if not color then
         color = {0.95,0.95,0.32,1}
     end
@@ -340,7 +347,7 @@ function lib.PixelGlow_Start(r,color,N,frequency,length,th,xOffset,yOffset,borde
     else
         period = 4
     end
-    local width,height = r:GetSize()
+    local width,height = rw, rh
     length = length or math.floor((width+height)*(2/N-0.1))
     length = min(length,min(width,height))
     th = th or 1
@@ -465,6 +472,12 @@ end
 
 function lib.AutoCastGlow_Start(r,color,N,frequency,scale,xOffset,yOffset,key,frameLevel)
     if not r then
+        return
+    end
+
+    -- Guard: skip if frame has no size yet (prevents wasteful texture allocations)
+    local rw, rh = r:GetSize()
+    if not rw or not rh or rw <= 0 or rh <= 0 then
         return
     end
 

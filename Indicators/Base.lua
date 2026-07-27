@@ -328,10 +328,19 @@ local function Shared_SetupGlow(frame, glowOptions)
     end
 
     if frame.glowType ~= "None" then
-        frame:StartGlow()
+        -- Only start glow if frame is already sized; otherwise the OnSizeChanged hook will start it
+        local w, h = frame:GetSize()
+        if w and h and w > 0 and h > 0 then
+            frame:StartGlow()
+        end
         if not frame._sizeChangedHooked then
             frame._sizeChangedHooked = true
             Cell.Polyfill.HookScript(frame, "OnSizeChanged", function()
+                -- Guard: don't start glow on zero-size (avoids wasteful texture allocation)
+                local fw, fh = frame:GetSize()
+                if not fw or not fh or fw <= 0 or fh <= 0 then return end
+                -- Stop old glow before restarting to prevent texture accumulation
+                if frame.StopGlow then frame:StopGlow() end
                 frame:StartGlow()
             end)
         end
