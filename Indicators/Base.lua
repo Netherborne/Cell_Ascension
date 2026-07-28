@@ -1635,7 +1635,7 @@ function I.CreateAura_Color(name, parent)
     solidTex:SetAllPoints(color)
     solidTex:Hide()
 
-    solidTex:SetScript("OnShow", function()
+    color:SetScript("OnShow", function()
         -- update texture
         solidTex:SetTexture(Cell.vars.texture)
     end)
