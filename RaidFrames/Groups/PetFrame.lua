@@ -113,8 +113,16 @@ end
 
 header:SetAttribute("_initialAttributeNames", "refreshUnitChange")
 header:SetAttribute("_initialAttribute-refreshUnitChange", [[
-    self:GetParent():CallMethod("UpdateButtonUnit", self:GetName(), self:GetAttribute("unit"))
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    self:GetParent():SetAttribute("callupdatebuttonunit", self:GetName().."|"..(self:GetAttribute("unit") or ""))
 ]])
+Cell.Polyfill.HookScript(header, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callupdatebuttonunit" then return end
+    if not value then return end
+    local bName, unit = strsplit("|", value)
+    if unit == "" then unit = nil end
+    self:UpdateButtonUnit(bName, unit)
+end)
 
 header:SetAttribute("template", "CellUnitButtonTemplate")
 header:SetAttribute("point", "TOP")

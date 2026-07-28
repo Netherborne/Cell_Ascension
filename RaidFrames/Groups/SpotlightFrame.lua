@@ -142,7 +142,8 @@ local function CreateAssignmentButton(index)
             menu:GetFrameRef("assignment"..index):SetAttribute("text", nil)
             menu:Hide()
 
-            menu:CallMethod("Save", index, nil)
+            -- WotLK: CallMethod doesn't exist in restricted environment
+            menu:SetAttribute("callsave", index.."|")
         end
     ]])
 
@@ -324,7 +325,8 @@ target:SetAttribute("_onclick", [[
     menu:GetFrameRef("assignment"..index):SetAttribute("text", "target")
     menu:Hide()
 
-    menu:CallMethod("Save", index, "target")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    menu:SetAttribute("callsave", index.."|target")
 ]])
 
 -- NOTE: no EVENT for this kind of targets， use OnUpdate
@@ -342,7 +344,8 @@ targettarget:SetAttribute("_onclick", [[
     menu:GetFrameRef("assignment"..index):SetAttribute("text", "targettarget")
     menu:Hide()
 
-    menu:CallMethod("Save", index, "targettarget")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    menu:SetAttribute("callsave", index.."|targettarget")
 ]])
 
 focus = Cell.CreateButton(menu, L["Focus"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
@@ -359,7 +362,8 @@ focus:SetAttribute("_onclick", [[
     menu:GetFrameRef("assignment"..index):SetAttribute("text", "focus")
     menu:Hide()
 
-    menu:CallMethod("Save", index, "focus")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    menu:SetAttribute("callsave", index.."|focus")
 ]])
 
 focustarget = Cell.CreateButton(menu, L["Focus Target"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
@@ -376,7 +380,8 @@ focustarget:SetAttribute("_onclick", [[
     menu:GetFrameRef("assignment"..index):SetAttribute("text", "focustarget")
     menu:Hide()
 
-    menu:CallMethod("Save", index, "focustarget")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    menu:SetAttribute("callsave", index.."|focustarget")
 ]])
 
 unit = Cell.CreateButton(menu, L["Unit"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
@@ -389,7 +394,8 @@ unit:SetAttribute("_onclick", [[
     spotlight:SetAttribute("specialUnit", nil)
     spotlight:SetAttribute("refreshOnUpdate", nil)
     spotlight:SetAttribute("updateOnTargetChanged", nil)
-    self:CallMethod("SetUnit", index, "target")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    self:SetAttribute("callsetunit", index.."|target")
     menu:Hide()
 ]])
 function unit:SetUnit(index, target)
@@ -402,6 +408,12 @@ function unit:SetUnit(index, target)
         F.Print(L["Invalid unit."])
     end
 end
+Cell.Polyfill.HookScript(unit, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callsetunit" then return end
+    if not value then return end
+    local idx, tgt = strsplit("|", value)
+    self:SetUnit(tonumber(idx), tgt ~= "" and tgt or nil)
+end)
 
 unitname = Cell.CreateButton(menu, L["Unit's Name"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
 P.Point(unitname, "TOPLEFT", unit, "BOTTOMLEFT")
@@ -413,7 +425,8 @@ unitname:SetAttribute("_onclick", [[
     spotlight:SetAttribute("specialUnit", nil)
     spotlight:SetAttribute("refreshOnUpdate", nil)
     spotlight:SetAttribute("updateOnTargetChanged", nil)
-    self:CallMethod("SetUnit", index, "target")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    self:SetAttribute("callsetunit", index.."|target")
     menu:Hide()
 ]])
 function unitname:SetUnit(index, target)
@@ -436,6 +449,12 @@ function unitname:SetUnit(index, target)
         F.Print(L["Invalid unit."])
     end
 end
+Cell.Polyfill.HookScript(unitname, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callsetunit" then return end
+    if not value then return end
+    local idx, tgt = strsplit("|", value)
+    self:SetUnit(tonumber(idx), tgt ~= "" and tgt or nil)
+end)
 
 unitpet = Cell.CreateButton(menu, L["Unit's Pet"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
 P.Point(unitpet, "TOPLEFT", unitname, "BOTTOMLEFT")
@@ -447,7 +466,8 @@ unitpet:SetAttribute("_onclick", [[
     spotlight:SetAttribute("specialUnit", nil)
     spotlight:SetAttribute("refreshOnUpdate", nil)
     spotlight:SetAttribute("updateOnTargetChanged", nil)
-    self:CallMethod("SetUnit", index, "target")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    self:SetAttribute("callsetunit", index.."|target")
     menu:Hide()
 ]])
 function unitpet:SetUnit(index, target)
@@ -460,6 +480,12 @@ function unitpet:SetUnit(index, target)
         F.Print(L["Invalid unit."])
     end
 end
+Cell.Polyfill.HookScript(unitpet, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callsetunit" then return end
+    if not value then return end
+    local idx, tgt = strsplit("|", value)
+    self:SetUnit(tonumber(idx), tgt ~= "" and tgt or nil)
+end)
 
 unittarget = Cell.CreateButton(menu, L["Unit's Target"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
 P.Point(unittarget, "TOPLEFT", unitpet, "BOTTOMLEFT")
@@ -467,7 +493,8 @@ P.Point(unittarget, "TOPRIGHT", unitpet, "BOTTOMRIGHT")
 unittarget:SetAttribute("_onclick", [[
     local menu = self:GetParent()
     local index = menu:GetAttribute("index")
-    self:CallMethod("SetUnit", index, "target")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    self:SetAttribute("callsetunit", index.."|target")
     menu:Hide()
 ]])
 function unittarget:SetUnit(index, target)
@@ -491,6 +518,12 @@ function unittarget:SetUnit(index, target)
         F.Print(L["Invalid unit."])
     end
 end
+Cell.Polyfill.HookScript(unittarget, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callsetunit" then return end
+    if not value then return end
+    local idx, tgt = strsplit("|", value)
+    self:SetUnit(tonumber(idx), tgt ~= "" and tgt or nil)
+end)
 
 tank = Cell.CreateButton(menu, _G.TANK, "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
 P.Point(tank, "TOPLEFT", unittarget, "BOTTOMLEFT")
@@ -503,7 +536,8 @@ tank:SetAttribute("_onclick", [[
     spotlight:SetAttribute("refreshOnUpdate", nil)
     spotlight:SetAttribute("updateOnTargetChanged", nil)
     menu:GetFrameRef("assignment"..index):SetAttribute("text", "tank")
-    self:CallMethod("SetUnit", index)
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    self:SetAttribute("callsetunit", index)
     menu:Hide()
 ]])
 function tank:SetUnit(index)
@@ -512,6 +546,11 @@ function tank:SetUnit(index)
     UpdateTanks()
     menu:Save(index, "tank")
 end
+Cell.Polyfill.HookScript(tank, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callsetunit" then return end
+    if not value then return end
+    self:SetUnit(tonumber(value) or value)
+end)
 
 healer = Cell.CreateButton(menu, _G.HEALER, "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
 P.Point(healer, "TOPLEFT", tank, "BOTTOMLEFT")
@@ -524,7 +563,8 @@ healer:SetAttribute("_onclick", [[
     spotlight:SetAttribute("refreshOnUpdate", nil)
     spotlight:SetAttribute("updateOnTargetChanged", nil)
     menu:GetFrameRef("assignment"..index):SetAttribute("text", "healer")
-    self:CallMethod("SetUnit", index)
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    self:SetAttribute("callsetunit", index)
     menu:Hide()
 ]])
 function healer:SetUnit(index)
@@ -533,6 +573,11 @@ function healer:SetUnit(index)
     UpdateHealers()
     menu:Save(index, "healer")
 end
+Cell.Polyfill.HookScript(healer, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callsetunit" then return end
+    if not value then return end
+    self:SetUnit(tonumber(value) or value)
+end)
 
 boss1target = Cell.CreateButton(menu, L["Boss1 Target"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
 P.Point(boss1target, "TOPLEFT", healer, "BOTTOMLEFT")
@@ -549,7 +594,8 @@ boss1target:SetAttribute("_onclick", [[
     menu:GetFrameRef("assignment"..index):SetAttribute("text", "boss1target")
     menu:Hide()
 
-    menu:CallMethod("Save", index, "boss1target")
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    menu:SetAttribute("callsave", index.."|boss1target")
 ]])
 
 clear = Cell.CreateButton(menu, L["Clear"], "transparent-accent", {20, 20}, true, false, nil, nil, "SecureHandlerAttributeTemplate,SecureHandlerClickTemplate")
@@ -566,7 +612,8 @@ clear:SetAttribute("_onclick", [[
     menu:GetFrameRef("assignment"..index):SetAttribute("text", nil)
     menu:Hide()
 
-    menu:CallMethod("Save", index, nil)
+    -- WotLK: CallMethod doesn't exist in restricted environment
+    menu:SetAttribute("callsave", index.."|")
 ]])
 
 -------------------------------------------------
@@ -724,6 +771,19 @@ function menu:Save(index, unit)
         end
     end
 end
+
+-- WotLK: CallMethod doesn't exist in restricted environment
+-- Use attribute-based communication instead: restricted code sets "callsave",
+-- then this handler dispatches to menu:Save()
+Cell.Polyfill.HookScript(menu, "OnAttributeChanged", function(self, name, value)
+    if name ~= "callsave" then return end
+    if not value then return end
+    local idx, unit = strsplit("|", value)
+    idx = tonumber(idx)
+    if not idx then return end
+    if unit == "" then unit = nil end
+    self:Save(idx, unit)
+end)
 
 -- update width to show full text
 local dumbFS1 = menu:CreateFontString(nil, "OVERLAY", "Cell_Ascension_FONT_WIDGET")
