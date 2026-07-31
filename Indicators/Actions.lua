@@ -750,3 +750,4 @@ function I.EnableActions(enabled)
         eventFrame:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     end
 end
+I.BuiltInIndicatorCreationFunctions["actions"] = I.CreateActions

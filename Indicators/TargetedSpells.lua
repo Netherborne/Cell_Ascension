@@ -31,11 +31,13 @@ end
 -- show / hide
 -------------------------------------------------
 local function HideCasts(b)
+    if not b.indicators.targetedSpells then return end
     b.indicators.targetedSpells:UpdateSize(0)
     b.indicators.targetedSpells:HideGlow()
 end
 
 local function ShowCasts(b, showGlow, sortedCasts, num)
+    if not b.indicators.targetedSpells then return end
     num = min(maxIcons, num)
     for i = 1, num do
         local cast = sortedCasts[i]
@@ -434,7 +436,7 @@ local cleanupTicker
 function I.EnableTargetedSpells(enabled)
     if enabled then
         F.IterateAllUnitButtons(function(b)
-            b.indicators.targetedSpells:Show()
+            if b.indicators.targetedSpells then b.indicators.targetedSpells:Show() end
         end, true)
 
         -- UNIT_SPELLCAST_DELAYED UNIT_SPELLCAST_FAILED UNIT_SPELLCAST_INTERRUPTED UNIT_SPELLCAST_START UNIT_SPELLCAST_STOP
@@ -492,7 +494,7 @@ function I.EnableTargetedSpells(enabled)
 
         F.IterateAllUnitButtons(function(b)
             HideCasts(b)
-            b.indicators.targetedSpells:Hide()
+            if b.indicators.targetedSpells then b.indicators.targetedSpells:Hide() end
         end, true)
     end
 end
@@ -504,3 +506,4 @@ end
 function I.UpdateTargetedSpellsNum(num)
     maxIcons = num
 end
+I.BuiltInIndicatorCreationFunctions["targetedSpells"] = I.CreateTargetedSpells

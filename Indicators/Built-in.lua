@@ -2553,3 +2553,43 @@ function I.ShowMissingBuff(unit, icon)
 
     F.HandleUnitButton("unit", unit, ShowMissingBuff, missingBuffsCounter[unit], icon)
 end
+local dummyIndicator
+dummyIndicator = setmetatable({}, {
+    __index = function(t, k)
+        return dummyIndicator
+    end,
+    __newindex = function() end,
+    __call = function() end
+})
+I.dummyIndicator = dummyIndicator
+
+I.BuiltInIndicatorCreationFunctions = {
+    ["nameText"] = I.CreateNameText,
+    ["statusText"] = I.CreateStatusText,
+    ["healthText"] = I.CreateHealthText,
+    ["powerText"] = I.CreatePowerText,
+    ["roleIcon"] = I.CreateRoleIcon,
+    ["leaderIcon"] = I.CreateLeaderIcon,
+    ["combatIcon"] = I.CreateCombatIcon,
+    ["directionArrow"] = I.CreateDirectionArrow,
+    ["readyCheckIcon"] = I.CreateReadyCheckIcon,
+    ["aggroBlink"] = I.CreateAggroBlink,
+    ["aggroBorder"] = I.CreateAggroBorder,
+    ["playerRaidIcon"] = I.CreatePlayerRaidIcon,
+    ["targetRaidIcon"] = I.CreateTargetRaidIcon,
+    ["shieldBar"] = I.CreateShieldBar,
+    ["dispels"] = I.CreateDispels,
+    ["raidDebuffs"] = I.CreateRaidDebuffs,
+    ["missingBuffs"] = I.CreateMissingBuffs,
+    ["healthThresholds"] = I.CreateHealthThresholds,
+    ["powerWordShield"] = I.CreatePowerWordShield,
+    ["crowdControls"] = I.CreateCrowdControls,
+    ["defensiveCooldowns"] = I.CreateDefensiveCooldowns,
+    ["externalCooldowns"] = I.CreateExternalCooldowns,
+    ["allCooldowns"] = I.CreateAllCooldowns,
+    ["debuffs"] = I.CreateDebuffs,
+    ["tankActiveMitigation"] = I.CreateTankActiveMitigation,
+    ["privateAuras"] = I.CreatePrivateAuras,
+    ["partyAssignmentIcon"] = I.CreatePartyAssignmentIcon,
+}
+

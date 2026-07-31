@@ -1940,13 +1940,13 @@ local function CreateGroupFilterPane()
         if previewMode == 0 then
             previewModeButton:SetText(L["Preview"]..": |cff777777"..L["OFF"])
             layoutPreview.fadeOut:Play()
-            if npcPreview:IsShown() then
+            if npcPreview and npcPreview:IsShown() then
                 npcPreview.fadeOut:Play()
             end
-            if petPreview:IsShown() then
+            if petPreview and petPreview:IsShown() then
                 petPreview.fadeOut:Play()
             end
-            if spotlightPreview:IsShown() then
+            if spotlightPreview and spotlightPreview:IsShown() then
                 spotlightPreview.fadeOut:Play()
             end
         elseif previewMode == 1 then
@@ -2381,7 +2381,7 @@ local function CreateLayoutSetupPane()
         if checked and selectedLayoutTable["pet"]["partyDetached"] then
             UpdatePetPreview()
         else
-            if petPreview:IsShown() then
+            if petPreview and petPreview:IsShown() then
                 UpdatePetPreview()
             end
         end
@@ -2396,7 +2396,7 @@ local function CreateLayoutSetupPane()
         if checked and selectedLayoutTable["pet"]["partyEnabled"] then
             UpdatePetPreview()
         else
-            if petPreview:IsShown() then
+            if petPreview and petPreview:IsShown() then
                 UpdatePetPreview()
             end
         end
@@ -2411,7 +2411,7 @@ local function CreateLayoutSetupPane()
         if checked then
             UpdatePetPreview()
         else
-            if petPreview:IsShown() then
+            if petPreview and petPreview:IsShown() then
                 UpdatePetPreview()
             end
         end
@@ -2431,7 +2431,7 @@ local function CreateLayoutSetupPane()
         if checked then
             UpdateNPCPreview()
         else
-            if npcPreview:IsShown() then
+            if npcPreview and npcPreview:IsShown() then
                 UpdateNPCPreview()
             end
         end
@@ -2447,7 +2447,7 @@ local function CreateLayoutSetupPane()
         if checked then
             UpdateNPCPreview()
         else
-            if npcPreview:IsShown() then
+            if npcPreview and npcPreview:IsShown() then
                 UpdateNPCPreview()
             end
         end
@@ -2467,7 +2467,7 @@ local function CreateLayoutSetupPane()
         if checked then
             UpdateSpotlightPreview()
         else
-            if spotlightPreview:IsShown() then
+            if spotlightPreview and spotlightPreview:IsShown() then
                 UpdateSpotlightPreview()
             end
         end

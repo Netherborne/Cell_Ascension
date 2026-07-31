@@ -215,3 +215,4 @@ function I.CreateTargetCounter(parent)
         text:SetTextColor(r, g, b)
     end
 end
+I.BuiltInIndicatorCreationFunctions["targetCounter"] = I.CreateTargetCounter

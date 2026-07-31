@@ -103,3 +103,4 @@ function I.EnableAoEHealing(enabled)
         eventFrame:UnregisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     end
 end
+I.BuiltInIndicatorCreationFunctions["aoeHealing"] = I.CreateAoEHealing

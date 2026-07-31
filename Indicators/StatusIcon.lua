@@ -165,6 +165,7 @@ end
 -- resurrection
 -------------------------------------------------
 function I.UpdateStatusIcon_Resurrection(button, start, duration)
+    if not button.indicators.statusIcon then return end
     local guid = button.states.guid
     local unit = button.states.unit
     local resurrectionIcon = button.indicators.resurrectionIcon
@@ -209,6 +210,7 @@ end
 -------------------------------------------------
 if Cell.isRetail then
     function I.UpdateStatusIcon(button)
+        if not button.indicators.statusIcon then return end
         local unit = button.states.unit
         if not unit then return end
 
@@ -288,6 +290,7 @@ if Cell.isRetail then
     end
 else
     function I.UpdateStatusIcon(button)
+        if not button.indicators.statusIcon then return end
         local unit = button.states.unit
         if not unit then return end
 
@@ -351,3 +354,4 @@ function I.EnableStatusIcon(enabled)
         end)
     end
 end
+I.BuiltInIndicatorCreationFunctions["statusIcon"] = I.CreateStatusIcon

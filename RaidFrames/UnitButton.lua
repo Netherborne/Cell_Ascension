@@ -191,19 +191,19 @@ end
 local function HandleIndicators(b)
     b._indicatorsReady = nil
 
-    if b._waitingForIndicatorCreation then
-        b._waitingForIndicatorCreation = nil
-        I.CreateDefensiveCooldowns(b)
-        I.CreateExternalCooldowns(b)
-        I.CreateAllCooldowns(b)
-        I.CreateDebuffs(b)
-    end
-
     -- NOTE: Remove old
     I.RemoveAllCustomIndicators(b)
 
     for _, t in next, b._config do
-        local indicator = b.indicators[t["indicatorName"]] or I.CreateIndicator(b, t)
+        local indicatorName = t["indicatorName"]
+        if not rawget(b.indicators, indicatorName) then
+            if I.BuiltInIndicatorCreationFunctions and I.BuiltInIndicatorCreationFunctions[indicatorName] then
+                I.BuiltInIndicatorCreationFunctions[indicatorName](b)
+            else
+                I.CreateIndicator(b, t)
+            end
+        end
+        local indicator = b.indicators[indicatorName]
         indicator.configs = t
 
         -- update position
@@ -1246,7 +1246,7 @@ local function UnitButton_UpdateDebuffs(self, isFullUpdate)
     -- update raid debuffs
     -- if self._debuffs.raidDebuffsFound or cleuUnits[unit] then
     if self._debuffs_raid[1] then
-        self.indicators.raidDebuffs:Show()
+        if self.indicators.raidDebuffs then self.indicators.raidDebuffs:Show() end
 
         -- cleuAuras
         -- local offset = 0
@@ -1307,25 +1307,25 @@ local function UnitButton_UpdateDebuffs(self, isFullUpdate)
                 self._debuffs_glow_current[topGlowType] = topGlowOptions
             end
             for t, o in next, self._debuffs_glow_current do
-                self.indicators.raidDebuffs:ShowGlow(t, o, true)
+                if self.indicators.raidDebuffs then self.indicators.raidDebuffs:ShowGlow(t, o, true) end
             end
             for _, t in next, RAID_DEBUFFS_GLOW_TYPES do
                 if not self._debuffs_glow_current[t] then
-                    self.indicators.raidDebuffs:HideGlow(t)
+                    if self.indicators.raidDebuffs then self.indicators.raidDebuffs:HideGlow(t) end
                 end
             end
             wipe(self._debuffs_glow_current)
         else
-            self.indicators.raidDebuffs:ShowGlow(
+            if self.indicators.raidDebuffs then self.indicators.raidDebuffs:ShowGlow(
                 I.GetDebuffGlow(
                     self._debuffs_cache[topAuraInstanceID]["name"],
                     self._debuffs_cache[topAuraInstanceID]["spellId"],
                     self._debuffs_cache[topAuraInstanceID]["applications"]
-                )
+                ) end
             )
         end
     else
-        self.indicators.raidDebuffs:Hide()
+        if self.indicators.raidDebuffs then self.indicators.raidDebuffs:Hide() end
     end
 
     -- update debuffs
@@ -1448,7 +1448,7 @@ local function HandleBuff(self, auraInfo)
         if enabledIndicators["statusText"] and I.IsDrinking(name) then
             if not self.indicators.statusText:GetStatus() then
                 self.indicators.statusText:SetStatus("DRINKING")
-                self.indicators.statusText:Show()
+                if self.indicators.statusText then self.indicators.statusText:Show() end
             end
             self._buffs.drinkingFound = true
         end
@@ -1513,12 +1513,12 @@ local function UnitButton_UpdateBuffs(self, isFullUpdate)
 
     -- hide tankActiveMitigation
     if not self._buffs.tankActiveMitigationFound then
-        self.indicators.tankActiveMitigation:Hide()
+        if self.indicators.tankActiveMitigation then self.indicators.tankActiveMitigation:Hide() end
     end
 
     -- hide drinking
     if not self._buffs.drinkingFound and self.indicators.statusText:GetStatus() == "DRINKING" then
-        -- self.indicators.statusText:Hide()
+        -- if self.indicators.statusText then self.indicators.statusText:Hide() end
         self.indicators.statusText:SetStatus()
     end
 
@@ -1561,7 +1561,7 @@ local function ResetAuraTables(self)
     -- raid debuffs glow
     wipe(self._debuffs_glow_current)
     if self.indicators.raidDebuffs then
-        self.indicators.raidDebuffs:HideGlow()
+        if self.indicators.raidDebuffs then self.indicators.raidDebuffs:HideGlow() end
     end
 
     self._mirror_image = nil
@@ -1796,9 +1796,9 @@ local function UnitButton_UpdateHealthStates(self, diff)
 
     if enabledIndicators["healthText"] then -- and not self.states.isDeadOrGhost then
         self.indicators.healthText:SetValue(health, healthMax, self.states.totalAbsorbs, self.states.healAbsorbs)
-        self.indicators.healthText:Show()
+        if self.indicators.healthText then self.indicators.healthText:Show() end
     else
-        self.indicators.healthText:Hide()
+        if self.indicators.healthText then self.indicators.healthText:Hide() end
     end
 end
 
@@ -2091,7 +2091,7 @@ local function UnitButton_UpdateReadyCheck(self)
         self.indicators.readyCheckIcon:SetStatus(status)
     else
         -- self.widgets.readyCheckHighlight:Hide()
-        self.indicators.readyCheckIcon:Hide()
+        if self.indicators.readyCheckIcon then self.indicators.readyCheckIcon:Hide() end
     end
 end
 
@@ -2104,7 +2104,7 @@ local function UnitButton_FinishReadyCheck(self)
     end
     C_Timer.After(6, function()
         -- self.widgets.readyCheckHighlight:Hide()
-        self.indicators.readyCheckIcon:Hide()
+        if self.indicators.readyCheckIcon then self.indicators.readyCheckIcon:Hide() end
     end)
 end
 
@@ -2114,7 +2114,7 @@ UnitButton_UpdatePowerText = function(self)
     if self.states.powerMax and self.states.power and not self.states.isDeadOrGhost then
         self.indicators.powerText:SetValue(self.states.power, self.states.powerMax)
     else
-        self.indicators.powerText:Hide()
+        if self.indicators.powerText then self.indicators.powerText:Hide() end
     end
 end
 
@@ -2217,7 +2217,7 @@ local function UnitButton_UpdateHealth(self, diff, skipStateUpdates)
     if enabledIndicators["healthThresholds"] then
         self.indicators.healthThresholds:CheckThreshold(healthPercent)
     else
-        self.indicators.healthThresholds:Hide()
+        if self.indicators.healthThresholds then self.indicators.healthThresholds:Hide() end
     end
 
     if CELL_FADE_OUT_HEALTH_PERCENT then
@@ -2271,22 +2271,22 @@ UnitButton_UpdateShieldAbsorbs = function(self, skipStateUpdates)
                 -- onlyShowOvershields
                 local overshieldPercent = (self.states.totalAbsorbs + self.states.health - self.states.healthMax) / self.states.healthMax
                 if overshieldPercent > 0 then
-                    self.indicators.shieldBar:Show()
+                    if self.indicators.shieldBar then self.indicators.shieldBar:Show() end
                     self.indicators.shieldBar:SetValue(overshieldPercent)
                 else
-                    self.indicators.shieldBar:Hide()
+                    if self.indicators.shieldBar then self.indicators.shieldBar:Hide() end
                 end
             else
-                self.indicators.shieldBar:Show()
+                if self.indicators.shieldBar then self.indicators.shieldBar:Show() end
                 self.indicators.shieldBar:SetValue(shieldPercent)
             end
         else
-            self.indicators.shieldBar:Hide()
+            if self.indicators.shieldBar then self.indicators.shieldBar:Hide() end
         end
 
         self.widgets.shieldBar:SetValue(shieldPercent, self.states.healthPercent)
     else
-        self.indicators.shieldBar:Hide()
+        if self.indicators.shieldBar then self.indicators.shieldBar:Hide() end
         self.widgets.shieldBar:Hide()
         self.widgets.overShieldGlow:Hide()
         self.widgets.shieldBarR:Hide()
@@ -2334,14 +2334,14 @@ local function UnitButton_UpdateThreat(self)
             self.indicators.aggroBorder:ShowAggro(GetThreatStatusColor(status))
         end
     else
-        self.indicators.aggroBlink:Hide()
-        self.indicators.aggroBorder:Hide()
+        if self.indicators.aggroBlink then self.indicators.aggroBlink:Hide() end
+        if self.indicators.aggroBorder then self.indicators.aggroBorder:Hide() end
     end
 end
 
 local function UnitButton_UpdateThreatBar(self)
     if not enabledIndicators["aggroBar"] then
-        self.indicators.aggroBar:Hide()
+        if self.indicators.aggroBar then self.indicators.aggroBar:Hide() end
         return
     end
 
@@ -2351,11 +2351,11 @@ local function UnitButton_UpdateThreatBar(self)
     -- isTanking, status, scaledPercentage, rawPercentage, threatValue = UnitDetailedThreatSituation(unit, mobUnit)
     local _, status, scaledPercentage, rawPercentage = UnitDetailedThreatSituation(unit, "target")
     if status then
-        self.indicators.aggroBar:Show()
+        if self.indicators.aggroBar then self.indicators.aggroBar:Show() end
         Cell.Polyfill.SetSmoothedValue(self.indicators.aggroBar, scaledPercentage)
         self.indicators.aggroBar:SetStatusBarColor(GetThreatStatusColor(status))
     else
-        self.indicators.aggroBar:Hide()
+        if self.indicators.aggroBar then self.indicators.aggroBar:Hide() end
     end
 end
 
@@ -2366,9 +2366,9 @@ local function UnitButton_UpdateCombatIcon(self)
     if not unit then return end
 
     if not (indicatorBooleans["combatIcon"] and InCombatLockdown()) and UnitAffectingCombat(unit) then
-        self.indicators.combatIcon:Show()
+        if self.indicators.combatIcon then self.indicators.combatIcon:Show() end
     else
-        self.indicators.combatIcon:Hide()
+        if self.indicators.combatIcon then self.indicators.combatIcon:Hide() end
     end
 end
 
@@ -2655,7 +2655,7 @@ UnitButton_UpdateAll = function(self)
                 UnitButton_UpdatePowerTextColor(self)
                 UnitButton_UpdatePowerText(self)
             else
-                self.indicators.powerText:Hide()
+                if self.indicators.powerText then self.indicators.powerText:Hide() end
             end
 
             if self._shouldShowPowerBar then
@@ -3362,7 +3362,7 @@ function B.SetOrientation(button, orientation, rotateTexture)
     healthBar:SetRotatesTexture(rotateTexture)
     powerBar:SetRotatesTexture(rotateTexture)
 
-    button.indicators.healthThresholds:SetOrientation(orientation)
+    if button.indicators.healthThresholds then button.indicators.healthThresholds:SetOrientation(orientation) end
 
     if rotateTexture then
         F.RotateTexture(healthBarLoss, 90)
@@ -3753,7 +3753,11 @@ function CellUnitButton_OnLoad(button)
 
     button.widgets = {}
     button.states = {}
-    button.indicators = {}
+    button.indicators = setmetatable({}, {
+        __index = function(t, k)
+            return Cell.dummyIndicator or I.dummyIndicator
+        end
+    })
 
     InitAuraTables(button)
 
@@ -3989,40 +3993,11 @@ function CellUnitButton_OnLoad(button)
     button.indicators.aggroBar = aggroBar
     aggroBar:Hide()
 
-    -- indicators
-    I.CreateNameText(button)
-    I.CreateStatusText(button)
-    I.CreateHealthText(button)
-    I.CreatePowerText(button)
-    I.CreateStatusIcon(button)
-    I.CreateRoleIcon(button)
-    I.CreateLeaderIcon(button)
-    I.CreateCombatIcon(button)
-    I.CreateReadyCheckIcon(button)
-    I.CreateAggroBlink(button)
-    I.CreateAggroBorder(button)
-    I.CreatePlayerRaidIcon(button)
-    I.CreateTargetRaidIcon(button)
-    I.CreateShieldBar(button)
-    I.CreateAoEHealing(button)
-    I.CreateTankActiveMitigation(button)
-    -- I.CreateDefensiveCooldowns(button)
-    -- I.CreateExternalCooldowns(button)
-    -- I.CreateAllCooldowns(button)
-    -- I.CreateDebuffs(button)
-    I.CreateDispels(button)
-    I.CreateRaidDebuffs(button)
-    I.CreatePrivateAuras(button)
-    I.CreateTargetedSpells(button)
-    I.CreateTargetCounter(button)
-    I.CreateCrowdControls(button)
-    I.CreateActions(button)
-    I.CreateMissingBuffs(button)
-    I.CreateHealthThresholds(button)
+    aggroBar:Hide()
+
+    -- utilities
     U.CreateSpellRequestIcon(button)
     U.CreateDispelRequestText(button)
-
-    button._waitingForIndicatorCreation = true
 
     -- events
     button:SetScript("OnAttributeChanged", UnitButton_OnAttributeChanged) -- init

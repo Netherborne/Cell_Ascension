@@ -604,7 +604,15 @@ local function UpdateIndicators(layout, indicatorName, setting, value, value2)
             I.RemoveAllCustomIndicators(previewButton)
 
             for i, t in pairs(currentLayoutTable["indicators"]) do
-                local indicator = previewButton.indicators[t["indicatorName"]] or I.CreateIndicator(previewButton, t)
+                local indicatorName = t["indicatorName"]
+                if not rawget(previewButton.indicators, indicatorName) then
+                    if I.BuiltInIndicatorCreationFunctions and I.BuiltInIndicatorCreationFunctions[indicatorName] then
+                        I.BuiltInIndicatorCreationFunctions[indicatorName](previewButton)
+                    else
+                        I.CreateIndicator(previewButton, t)
+                    end
+                end
+                local indicator = previewButton.indicators[indicatorName]
                 indicator.configs = t
 
                 InitIndicator(t["indicatorName"])
