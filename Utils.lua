@@ -925,13 +925,15 @@ function F.IterateAllUnitButtons(func, updateCurrentGroupOnly, updateQuickAssist
 
     -- raid
     if not updateCurrentGroupOnly or (updateCurrentGroupOnly and Cell.vars.groupType == "raid") then
-        if not updateCurrentGroupOnly or Cell.vars.currentLayoutTable.main.combineGroups then
+        local combineGroups = Cell.vars.currentLayoutTable and Cell.vars.currentLayoutTable.main and Cell.vars.currentLayoutTable.main.combineGroups
+
+        if not updateCurrentGroupOnly or combineGroups then
             for _, b in ipairs(Cell.unitButtons.raid[combinedHeader]) do
                 func(b)
             end
         end
 
-        if not updateCurrentGroupOnly or not Cell.vars.currentLayoutTable.main.combineGroups then
+        if not updateCurrentGroupOnly or not combineGroups then
             for _, header in ipairs(separatedHeaders) do
                 for _, b in ipairs(Cell.unitButtons.raid[header]) do
                     func(b)
